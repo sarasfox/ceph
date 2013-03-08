@@ -1976,7 +1976,8 @@ noinst_HEADERS = \
 	os/ObjectMap.h \
 	os/DBObjectMap.h \
 	os/KeyValueDB.h \
-	os/LevelDBStore.h
+	os/LevelDBStore.h \
+	common/cmdparse.h
 
 if ENABLE_COVERAGE
 COV_DIR = $(DESTDIR)$(libdir)/ceph/coverage
