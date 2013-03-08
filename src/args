@@ -18,19 +18,34 @@ Something wrong with arguments
 class ArgumentError(Exception):
     pass
 
-class ArgumentNumberError(ArgumentError):
-    pass
-
-class ArgumentFormatError(ArgumentError):
-    pass
-
-class ArgumentValidError(ArgumentError):
+"""
+Wrong number of a repeated argument
+"""
+class ArgumentNumber(ArgumentError):
     pass
 
 """
-Special for mismatched prefix, to distinguish severity
+Argument value has wrong format 
 """
-class ArgumentPrefixError(ArgumentError):
+class ArgumentFormat(ArgumentError):
+    pass
+
+"""
+Argument value is otherwise invalid (doesn't match choices, for instance)
+"""
+class ArgumentValid(ArgumentError):
+    pass
+
+"""
+Special for mismatched prefix; less severe, don't report by default
+"""
+class ArgumentPrefix(ArgumentError):
+    pass
+
+"""
+some semantic issue with the JSON
+"""
+class JsonFormat(Exception):
     pass
 
 """
@@ -100,13 +115,13 @@ class CephInt(CephArgtype):
         try:
             val = long(s)
         except ValueError:
-            raise ArgumentValidError("{} doesn't represent an int".format(s))
+            raise ArgumentValid("{} doesn't represent an int".format(s))
         if len(self.range) == 2:
             if val < self.range[0] or val > self.range[1]:
-                raise ArgumentValidError("{} not in range {}".format(val, self.range))
+                raise ArgumentValid("{} not in range {}".format(val, self.range))
         elif len(self.range) == 1:
             if val < self.range[0]:
-                raise ArgumentValidError("{} not in range {}".format(val, self.range))
+                raise ArgumentValid("{} not in range {}".format(val, self.range))
         self.val = val
         return True
 
@@ -119,7 +134,8 @@ class CephInt(CephArgtype):
 
 """
 range-limited float type
-range: list of 1 or 2 floats, [min] or [min, max] """
+range: list of 1 or 2 floats, [min] or [min, max]
+"""
 class CephFloat(CephArgtype):
     def __init__(self, range=''):
         if isinstance(range, types.StringType):
@@ -135,13 +151,13 @@ class CephFloat(CephArgtype):
         try:
             val = float(s)
         except ValueError:
-            raise ArgumentValidError("{} doesn't represent a float".format(s))
+            raise ArgumentValid("{} doesn't represent a float".format(s))
         if len(self.range) == 2:
             if val < self.range[0] or val > self.range[1]:
-                raise ArgumentValidError("{} not in range {}".format(val, self.range))
+                raise ArgumentValid("{} not in range {}".format(val, self.range))
         elif len(self.range) == 1:
             if val < self.range[0]:
-                raise ArgumentValidError("{} not in range {}".format(val, self.range))
+                raise ArgumentValid("{} not in range {}".format(val, self.range))
         self.val = val
         return True
 
@@ -162,7 +178,7 @@ class CephString(CephArgtype):
     def valid(self, s, partial=False):
         for c in self.badchars:
             if c in s:
-                raise ArgumentFormatError("bad char {} in {}".format(c, s))
+                raise ArgumentFormat("bad char {} in {}".format(c, s))
         self.val = s
         return True
 
@@ -179,7 +195,7 @@ class CephSocketpath(CephArgtype):
     def valid(self, s, partial=False):
         mode = os.stat(s).st_mode
         if not stat.S_ISSOCK(mode):
-            raise ArgumentValidError('socket path {} is not a socket'.format(s))
+            raise ArgumentValid('socket path {} is not a socket'.format(s))
         self.val = s
         return True
     def __str__(self):
@@ -202,25 +218,25 @@ class CephIPAddr(CephArgtype):
                 a = s[:port]
                 p = s[port+1:]
                 if int(p) > 65535:
-                    raise ArgumentValidError('{}: invalid IPv4 port'.format(p))
+                    raise ArgumentValid('{}: invalid IPv4 port'.format(p))
             else:
                 a = s
                 p = None
             try:
                 socket.inet_pton(socket.AF_INET, a)
             except:
-                raise ArgumentValidError('{}: invalid IPv4 address'.format(a))
+                raise ArgumentValid('{}: invalid IPv4 address'.format(a))
         else:
             # v6
             if s.startswith('['):
                 end = s.find(']')
                 if end == -1:
-                    raise ArgumentFormatError('{} missing terminating ]'.format(s))
+                    raise ArgumentFormat('{} missing terminating ]'.format(s))
                 if s[end+1] == ':':
                     try:
                         p = int(s[end+2])
                     except:
-                        raise ArgumentValidError('{}: bad port number'.format(s))
+                        raise ArgumentValid('{}: bad port number'.format(s))
                 a = s[1:end]
             else:
                 a = s
@@ -228,9 +244,9 @@ class CephIPAddr(CephArgtype):
             try:
                 socket.inet_pton(socket.AF_INET6, a)
             except:
-                raise ArgumentValidError('{} not valid IPv6 address'.format(s))
+                raise ArgumentValid('{} not valid IPv6 address'.format(s))
         if p is not None and long(p) > 65535:
-            raise ArgumentValidError("{} not a valid port number".format(p))
+            raise ArgumentValid("{} not a valid port number".format(p))
         self.val = s
         return True
 
@@ -241,7 +257,7 @@ class CephEntityAddr(CephIPAddr):
     def valid(self,s):
         ip, nonce = s.split('/')
         if not super(CephIPAddr, self).valid(self, ip):
-            raise ArgumentValidError('CephEntityAddr {}: ip address invalid'.format(s))
+            raise ArgumentValid('CephEntityAddr {}: ip address invalid'.format(s))
         self.val = s
         return True
 
@@ -254,7 +270,7 @@ Pool name; checked for presence in cluster
 class CephPoolname(CephArgtype):
     def valid(self, s):
         # if cluster.pool.exists(s):
-        #    raise ArgumentValidError("pool {} does not exist".format(s))
+        #    raise ArgumentValid("pool {} does not exist".format(s))
         self.val = s
         return True
 
@@ -279,12 +295,12 @@ pgid, in form N.xxx (N = pool number, xxx = hex pgnum)
 class CephPgid(CephArgtype):
     def valid(self, s, partial=False):
         if s.find('.') == -1:
-            raise ArgumentFormatError('pgid has no .')
+            raise ArgumentFormat('pgid has no .')
         poolid, pgnum = s.split('.')
         try:
             pgnum = int(pgnum, 16)
         except:
-            raise ArgumentFormatError('pgnum {} not hex integer'.format(pgnum))
+            raise ArgumentFormat('pgnum {} not hex integer'.format(pgnum))
         self.val = s
         return True
 
@@ -297,15 +313,15 @@ Name, or type.id, where type is osd|mon|client|mds, and id is a base10 int
 class CephName(CephArgtype):
     def valid(self, s, partial=False):
         if s.find('.') == -1:
-            raise ArgumentFormatError('no .')
+            raise ArgumentFormat('no .')
         t, i = s.split('.')
         if not t in ('osd', 'mon', 'client', 'mds'):
-            raise ArgumentValidError('unknown type ' + self.t)
+            raise ArgumentValid('unknown type ' + self.t)
         if t == 'osd':
             try:
                 i = int(i)
             except:
-                raise ArgumentFormatError('osd id ' + i + ' not integer')
+                raise ArgumentFormat('osd id ' + i + ' not integer')
             # could check for valid id?
         self.val = s
         return True
@@ -324,7 +340,7 @@ class CephChoices(CephArgtype):
     def valid(self, s, partial=False):
         if not partial:
             if not s in self.strings:
-                raise ArgumentValidError("{} not in {}".format(s, self.strings))
+                raise ArgumentValid("{} not in {}".format(s, self.strings))
             self.val = s
             return True
 
@@ -333,7 +349,7 @@ class CephChoices(CephArgtype):
             if t.startswith(s):
                 self.val = s
                 return True
-        raise ArgumentValidError("{} not in {}".format(s, self.strings))
+        raise ArgumentValid("{} not in {}".format(s, self.strings))
 
     def __str__(self):
         if len(self.strings) == 1:
@@ -349,7 +365,7 @@ class CephFilepath(CephArgtype):
         try:
             open(s, 'a+')
         except Exception as e:
-            raise ArgumentValidError('can\'t open {}: {}'.format(s, e))
+            raise ArgumentValid('can\'t open {}: {}'.format(s, e))
         self.val = s
         return True
 
@@ -362,19 +378,19 @@ class CephFilepath(CephArgtype):
 class CephFragment(CephArgtype):
     def valid(self, s, partial=False):
         if s.find('/') == -1:
-            raise ArgumentFormatError('{}: no /'.format(s))
+            raise ArgumentFormat('{}: no /'.format(s))
         val, bits = s.split('/')
         # XXX is this right?
         if not val.startswith('0x'):
-            raise ArgumentFormatError("{} not a hex integer".format(val))
+            raise ArgumentFormat("{} not a hex integer".format(val))
         try:
             long(val)
         except:
-            raise ArgumentFormatError('can\'t convert {} to integer'.format(val))
+            raise ArgumentFormat('can\'t convert {} to integer'.format(val))
         try:
             long(bits)
         except:
-            raise ArgumentFormatError('can\'t convert {} to integer'.format(bits))
+            raise ArgumentFormat('can\'t convert {} to integer'.format(bits))
         self.val = s
         return True
 
@@ -390,7 +406,7 @@ class CephUUID(CephArgtype):
         try:
             uuid.UUID(s)
         except Exception as e:
-            raise ArgumentFormatError('invalid UUID {}: {}'.format(s, e))
+            raise ArgumentFormat('invalid UUID {}: {}'.format(s, e))
         self.val = s
         return True
 
@@ -413,7 +429,7 @@ class CephPrefix(CephArgtype):
             if (s == self.prefix):
                 self.val = s
                 return True
-        raise ArgumentPrefixError("no match for {}".format(s))
+        raise ArgumentPrefix("no match for {}".format(s))
 
     def __str__(self):
         return self.prefix
@@ -525,12 +541,6 @@ each dict contains 'sig' with the array of descriptors, and 'help'
 with the helptext.
 """
 
-"""
-some semantic issue with the JSON
-"""
-
-class JsonFormatError(Exception):
-    pass
 
 def parse_json_funcsig(s):
     try:
@@ -545,7 +555,7 @@ def parse_json_funcsig(s):
             sig = sigandhelp['sig']
         except KeyError:
             s = "JSON descriptor {} has no 'sig'".format(cmdtag)
-            raise JsonFormatError(s);
+            raise JsonFormat(s);
 
         newsig = []
         argnum = 0
@@ -558,7 +568,7 @@ def parse_json_funcsig(s):
                 # not a simple string, must be dict
                 if not 'type' in desc:
                     s = 'JSON descriptor {} has no type'.format(sig)
-                    raise JsonFormatError(s)
+                    raise JsonFormat(s)
                 # look up type string in our globals() dict; if it's an
                 # object of type types.TypeType, it must be a
                 # locally-defined class. otherwise, we haven't a clue.
@@ -566,10 +576,10 @@ def parse_json_funcsig(s):
                     t = globals()[desc['type']]
                     if type(t) != types.TypeType:
                         s = 'unknown type {}'.format(desc['type'])
-                        raise JsonFormatError(s)
+                        raise JsonFormat(s)
                 else:
                     s = 'unknown type {}'.format(desc['type'])
-                    raise JsonFormatError(s)
+                    raise JsonFormat(s)
 
             kwargs = dict()
             for key, val in desc.items():
@@ -652,9 +662,9 @@ def validate(args, signature):
             except:
                 if desc.req:
                     if desc.N and desc.numseen < 1:
-                        raise ArgumentNumberError('saw {} of {}: expected at least 1'.format(desc.numseen, desc))
+                        raise ArgumentNumber('saw {} of {}: expected at least 1'.format(desc.numseen, desc))
                     elif not desc.N and desc.numseen < desc.n:
-                        raise ArgumentNumberError('saw {} of {}: expected exactly {}'.format(desc.numseen, desc, desc.n))
+                        raise ArgumentNumber('saw {} of {}: expected exactly {}'.format(desc.numseen, desc, desc.n))
                 break
             # may raise exception
             validate_one(word, desc)
@@ -759,7 +769,7 @@ def main():
                 valid_dict = validate(parsed_args.args, sig)
                 found = sig
                 break
-            except ArgumentPrefixError:
+            except ArgumentPrefix:
                 # this is common, and we don't want to whine about it
                 pass
             except ArgumentError as e:
