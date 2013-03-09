@@ -720,6 +720,7 @@ def main():
     parser = argparse.ArgumentParser(description='Frontend for ceph CLI',
                                      usage=usage)
     parser.add_argument('-v', '--verbose', action='count')
+    parser.add_argument('-f', '--format', choices=['json', 'xml', 'plain'], dest='output_format')
     parser.add_argument('args', nargs='*')
     parsed_args = parser.parse_args()
 
@@ -780,6 +781,8 @@ def main():
         print >> sys.stderr, '{}: invalid command'.format(parsed_args.args)
         return 1
 
+    if parsed_args.output_format:
+        valid_dict['format'] = parsed_args.output_format
     cmd = [command, json.dumps(valid_dict)]
     print >> sys.stderr, "invoking ", cmd
     print get_process_output([command, json.dumps(valid_dict)])
