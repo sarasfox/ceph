@@ -2473,7 +2473,6 @@ void Monitor::handle_command(MMonCommand *m)
 		   access_cmd);
   bool access_all = (session->caps.get_allow_all() || access_cmd);
 
-  string fullcmd;
   string module;
   string err;
   map<string, cmd_vartype> cmdmap;
@@ -2487,12 +2486,8 @@ void Monitor::handle_command(MMonCommand *m)
   if (m->cmd.empty())
     goto out;
 
-  // First, join all cmd strings
-  for (vector<string>::iterator it = m->cmd.begin();
-       it != m->cmd.end(); it++)
-    fullcmd += *it;
 #if 0
-  if (!cmdmap_from_json(fullcmd, &cmdmap, ss)) {
+  if (!cmdmap_from_json(m->cmd, &cmdmap, ss)) {
     // ss has reason for failure
     r = -EINVAL;
     string rs = ss.str();
@@ -2500,7 +2495,7 @@ void Monitor::handle_command(MMonCommand *m)
   }
 #else
   // XXX allow failure for now
-  if (cmdmap_from_json(fullcmd, &cmdmap, ss)) {
+  if (cmdmap_from_json(m->cmd, &cmdmap, ss)) {
     // XXX hack for pg only for now
     string cmd_prefix;
     getval(cmdmap, "prefix", cmd_prefix);

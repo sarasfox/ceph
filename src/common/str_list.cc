@@ -44,12 +44,6 @@ static bool get_next_token(const std::string &s, size_t& pos, const char *delims
   return true;
 }
 
-static bool get_next_token(const std::string &s, size_t& pos, string& token)
-{
-  const char *delims = ";,= \t";
-  return get_next_token(s, pos, delims, token);
-}
-
 void get_str_list(const std::string& str, const char *delims, std::list<string>& str_list)
 {
   size_t pos = 0;

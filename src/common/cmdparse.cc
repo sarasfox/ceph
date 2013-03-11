@@ -1,7 +1,7 @@
 #include "common/cmdparse.h"
 #include "json_spirit/json_spirit.h"
 
-// Parse JSON in cmd into a map from field to map of values
+// Parse JSON in vector cmd into a map from field to map of values
 // (use mValue/mObject)
 // 'cmd' should not disappear over lifetime of map
 // 'mapp' points to the caller's map
@@ -11,15 +11,21 @@
 using namespace std;
 
 bool
-cmdmap_from_json(string cmd, map<string, cmd_vartype> *mapp, stringstream &ss)
+cmdmap_from_json(std::vector<string> cmd, map<string, cmd_vartype> *mapp, stringstream &ss)
 {
   json_spirit::mValue v;
 
+  std::string fullcmd;
+  // First, join all cmd strings
+  for (vector<string>::iterator it = cmd.begin();
+       it != cmd.end(); it++)
+    fullcmd += *it;
+
   try {
-    if (!json_spirit::read(cmd, v))
-      throw std::runtime_error("unparseable JSON" + cmd);
+    if (!json_spirit::read(fullcmd, v))
+      throw std::runtime_error("unparseable JSON" + fullcmd);
     if (v.type() != json_spirit::obj_type)
-      throw(std::runtime_error("not JSON object" + cmd));
+      throw(std::runtime_error("not JSON object" + fullcmd));
 
     // allocate new mObject (map) to return
     // make sure all contents are simple types (not arrays or objects)
@@ -37,7 +43,7 @@ cmdmap_from_json(string cmd, map<string, cmd_vartype> *mapp, stringstream &ss)
       case json_spirit::obj_type:
       case json_spirit::array_type:
       default:
-	throw(std::runtime_error("JSON array/object not allowed" + cmd));
+	throw(std::runtime_error("JSON array/object not allowed" + fullcmd));
         break;
 
       case json_spirit::str_type:

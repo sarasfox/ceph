@@ -4,10 +4,11 @@
 #include <sstream>
 #include <map>
 #include <boost/variant.hpp>
+#include <vector>
 
 typedef boost::variant<std::string, bool, int, uint64_t, double> cmd_vartype;
 
-bool cmdmap_from_json(std::string cmd, std::map<std::string, cmd_vartype> *mapp, std::stringstream &ss);
+bool cmdmap_from_json(std::vector<std::string> cmd, std::map<std::string, cmd_vartype> *mapp, std::stringstream &ss);
 
 template <typename T>
 bool

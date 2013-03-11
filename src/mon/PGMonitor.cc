@@ -1071,7 +1071,6 @@ bool PGMonitor::preprocess_command(MMonCommand *m)
   int r = -1;
   bufferlist rdata;
   stringstream ss;
-  string fullcmd;
 
   MonSession *session = m->get_session();
   if (!session ||
@@ -1082,13 +1081,8 @@ bool PGMonitor::preprocess_command(MMonCommand *m)
     return true;
   }
 
-  // First, join all cmd strings
-  for (vector<string>::iterator it = m->cmd.begin();
-       it != m->cmd.end(); it++)
-    fullcmd += *it;
-
   map<string, cmd_vartype> cmdmap;
-  if (!cmdmap_from_json(fullcmd, &cmdmap, ss)) {
+  if (!cmdmap_from_json(m->cmd, &cmdmap, ss)) {
     // ss has reason for failure
     string rs = ss.str();
     mon->reply_command(m, -EINVAL, rs, rdata, get_version());
@@ -1284,7 +1278,6 @@ bool PGMonitor::prepare_command(MMonCommand *m)
   epoch_t epoch = mon->osdmon()->osdmap.get_epoch();
   int r = -EINVAL;
   string rs;
-  string fullcmd;
 
   MonSession *session = m->get_session();
   if (!session ||
@@ -1295,14 +1288,8 @@ bool PGMonitor::prepare_command(MMonCommand *m)
     return true;
   }
 
-  // First, join all cmd strings
-  static string s;
-  for (std::vector<string>::iterator it = m->cmd.begin();
-       it != m->cmd.end(); it++)
-    fullcmd += *it;
-
   map<string, cmd_vartype> cmdmap;
-  if (!cmdmap_from_json(fullcmd, &cmdmap, ss)) {
+  if (!cmdmap_from_json(m->cmd, &cmdmap, ss)) {
     // ss has reason for failure
     string rs = ss.str();
     mon->reply_command(m, -EINVAL, rs, get_version());
