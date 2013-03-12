@@ -722,7 +722,7 @@ def main():
                                      usage=usage)
     parser.add_argument('-v', '--verbose', action='count')
     parser.add_argument('-f', '--format', choices=['json', 'xml', 'plain'], dest='output_format')
-    parser.add_argument('args', nargs='*')
+    parser.add_argument('args', nargs=argparse.REMAINDER)
     parsed_args = parser.parse_args()
 
     if parsed_args.verbose:
