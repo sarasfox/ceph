@@ -462,9 +462,10 @@ class argdesc(object):
 
         self.name = name
         self.N = (n in ['n', 'N'])
-        self.n = n
         if self.N:
             self.n = 1
+        else:
+            self.n = int(n)
         self.instance = self.t(**self.typeargs)
 
     def __repr__(self):
