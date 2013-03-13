@@ -1062,24 +1062,11 @@ void PGMonitor::dump_info(Formatter *f)
   f->close_section();
 }
 
-// example input: 
-// "opcode:1 dumpop:dump dumpcontents:pools|osds|pgs"
-// parse into map<string, string> for named access
-
 bool PGMonitor::preprocess_command(MMonCommand *m)
 {
   int r = -1;
   bufferlist rdata;
   stringstream ss;
-
-  MonSession *session = m->get_session();
-  if (!session ||
-      (!session->caps.get_allow_all() &&
-       !session->caps.check_privileges(PAXOS_PGMAP, MON_CAP_R) &&
-       !mon->_allowed_command(session, m->cmd))) {
-    mon->reply_command(m, -EACCES, "access denied", rdata, get_version());
-    return true;
-  }
 
   map<string, cmd_vartype> cmdmap;
   if (!cmdmap_from_json(m->cmd, &cmdmap, ss)) {
@@ -1089,10 +1076,19 @@ bool PGMonitor::preprocess_command(MMonCommand *m)
     return true;
   }
 
-  string err;
   string prefix;
-
   getval(cmdmap, "prefix", prefix);
+  vector<string> prefix_vec;
+  get_str_vec(prefix, prefix_vec);
+
+  MonSession *session = m->get_session();
+  if (!session ||
+      (!session->caps.get_allow_all() &&
+       !session->caps.check_privileges(PAXOS_PGMAP, MON_CAP_R) &&
+       !mon->_allowed_command(session, prefix_vec))) {
+    mon->reply_command(m, -EACCES, "access denied", rdata, get_version());
+    return true;
+  }
 
   if (prefix == "pg stat") {
     ss << pg_map;
@@ -1279,15 +1275,6 @@ bool PGMonitor::prepare_command(MMonCommand *m)
   int r = -EINVAL;
   string rs;
 
-  MonSession *session = m->get_session();
-  if (!session ||
-      (!session->caps.get_allow_all() &&
-       !session->caps.check_privileges(PAXOS_PGMAP, MON_CAP_W) &&
-       !mon->_allowed_command(session, m->cmd))) {
-    mon->reply_command(m, -EACCES, "access denied", get_version());
-    return true;
-  }
-
   map<string, cmd_vartype> cmdmap;
   if (!cmdmap_from_json(m->cmd, &cmdmap, ss)) {
     // ss has reason for failure
@@ -1296,9 +1283,19 @@ bool PGMonitor::prepare_command(MMonCommand *m)
     return true;
   }
 
-  string err;
   string prefix;
   getval(cmdmap, "prefix", prefix);
+
+  vector<string> prefix_vec;
+  get_str_vec(prefix, prefix_vec);
+  MonSession *session = m->get_session();
+  if (!session ||
+      (!session->caps.get_allow_all() &&
+       !session->caps.check_privileges(PAXOS_PGMAP, MON_CAP_W) &&
+       !mon->_allowed_command(session, prefix_vec))) {
+    mon->reply_command(m, -EACCES, "access denied", get_version());
+    return true;
+  }
 
   if (prefix == "pg force_create_pg") {
     string pgidstr;

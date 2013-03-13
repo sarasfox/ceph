@@ -2412,8 +2412,6 @@ dump_sig_to_json(Formatter *f, const char *sig)
 
 #define ARRAY_SIZE(a)	(sizeof(a) / sizeof(*a))
 
-// "include-me-twice-with-different-definitions-to-extract-fields" trick
-// glue module and parsesig together for JSON down to argparser
 #undef COMMAND
 struct MonCommand {
   const char *cmdstring;
@@ -2468,11 +2466,12 @@ void Monitor::handle_command(MMonCommand *m)
     reply_command(m, 0, "", rdata, 0);
   }
 
+  // this doesn't work well if m->cmd is JSON; redone below if so
   bool access_cmd = _allowed_command(session, m->cmd);
-  bool access_r = (session->caps.check_privileges(PAXOS_MONMAP, MON_CAP_R) ||
-		   access_cmd);
-  bool access_all = (session->caps.get_allow_all() || access_cmd);
+  bool access_r;
+  bool access_all;
 
+  string prefix;
   string module;
   string err;
   map<string, cmd_vartype> cmdmap;
@@ -2496,29 +2495,35 @@ void Monitor::handle_command(MMonCommand *m)
 #else
   // XXX allow failure for now
   if (cmdmap_from_json(m->cmd, &cmdmap, ss)) {
-    // XXX hack for pg only for now
-    string cmd_prefix;
-    getval(cmdmap, "prefix", cmd_prefix);
-    if (cmd_prefix.compare(0, 3, "pg ") == 0) {
-      pgmon()->dispatch(m);
-    }
+    getval(cmdmap, "prefix", prefix);
+    module = prefix.substr(0, prefix.find(' '));
+    vector<string> prefix_vec;
+    get_str_vec(prefix, prefix_vec);
+    access_cmd = _allowed_command(session, prefix_vec);
+  } else {
+    // ignore error
+    ss.str("");
   }
 #endif
 
-  if (m->cmd[0] == "mds") {
+  access_r = (session->caps.check_privileges(PAXOS_MONMAP, MON_CAP_R) ||
+		   access_cmd);
+  access_all = (session->caps.get_allow_all() || access_cmd);
+
+  if (module == "mds" || m->cmd[0] == "mds") {
     mdsmon()->dispatch(m);
     return;
   }
-  if (m->cmd[0] == "osd") {
+  if (module == "osd" || m->cmd[0] == "osd") {
     osdmon()->dispatch(m);
     return;
   }
 
-  if (m->cmd[0] == "pg") {
+  if (module == "pg" || m->cmd[0] == "pg") {
     pgmon()->dispatch(m);
     return;
   }
-  if (m->cmd[0] == "mon") {
+  if (module == "mon" || m->cmd[0] == "mon") {
     monmon()->dispatch(m);
     return;
   }
@@ -2531,32 +2536,30 @@ void Monitor::handle_command(MMonCommand *m)
     return;
   }
 
-  // XXX these have no module string?...
+  // locally-handled commands
 
-  if (m->cmd[0] == "fsid") {
+  if (prefix == "fsid") {
     stringstream ss;
     ss << monmap->fsid;
     reply_command(m, 0, ss.str(), rdata, 0);
     return;
   }
-  if (m->cmd[0] == "log") {
+  if (prefix == "log") {
     if (!access_r) {
       r = -EACCES;
       rs = "access denied";
       goto out;
     }
+    string logtext;
+    getval(cmdmap, "logtext", logtext);
     stringstream ss;
-    for (unsigned i=1; i<m->cmd.size(); i++) {
-      if (i > 1)
-        ss << ' ';
-      ss << m->cmd[i];
-    }
+    ss << logtext;
     clog.info(ss);
     rs = "ok";
     reply_command(m, 0, rs, rdata, 0);
     return;
   }
-  if (m->cmd[0] == "stop_cluster") {
+  if (prefix == "stop_cluster") {
     if (!access_all) {
       r = -EACCES;
       rs = "access denied";
@@ -2567,16 +2570,18 @@ void Monitor::handle_command(MMonCommand *m)
     return;
   }
 
-  if (m->cmd[0] == "injectargs") {
+  if (prefix == "injectargs") {
     if (!access_all) {
       r = -EACCES;
       rs = "access denied";
       goto out;
     }
-    if (m->cmd.size() == 2) {
-      dout(0) << "parsing injected options '" << m->cmd[1] << "'" << dendl;
+    string injected_args;
+    getval(cmdmap, "injected_args", injected_args);
+    if (!injected_args.empty()) {
+      dout(0) << "parsing injected options '" << injected_args << "'" << dendl;
       ostringstream oss;
-      g_conf->injectargs(m->cmd[1], &oss);
+      g_conf->injectargs(injected_args, &oss);
       derr << "injectargs:" << dendl;
       derr << oss.str() << dendl;
       rs = "parsed options";
@@ -2585,29 +2590,21 @@ void Monitor::handle_command(MMonCommand *m)
       rs = "must supply options to be parsed in a single string";
       r = -EINVAL;
     }
-  } else if ((m->cmd[0] == "status") || (m->cmd[0] == "health")
-      || (m->cmd[0] == "df")) {
+  } else if (prefix == "status" ||
+	     prefix == "health" ||
+	     prefix == "df") {
     if (!access_r) {
       r = -EACCES;
       rs = "access denied";
       goto out;
     }
 
-    vector<const char *> args;
-    for (unsigned int i = 0; i < m->cmd.size(); ++i)
-      args.push_back(m->cmd[i].c_str());
+    string format;
+    getval(cmdmap, "format", format, string("plain"));
+    string detail;
+    getval(cmdmap, "detail", detail);
 
-    string format = "plain";
     JSONFormatter *jf = NULL;
-    for (vector<const char*>::iterator i = args.begin(); i != args.end();) {
-      string val;
-      if (ceph_argparse_witharg(args, i, &val,
-            "-f", "--format", (char*)NULL)) {
-        format = val;
-      } else {
-        ++i;
-      }
-    }
 
     if (format != "plain") {
       if (format == "json") {
@@ -2623,31 +2620,24 @@ void Monitor::handle_command(MMonCommand *m)
     }
 
     stringstream ss;
-    if (string(args[0]) == "status") {
+    if (prefix == "status") {
       get_status(ss, jf);
 
       if (jf) {
         jf->flush(ss);
         ss << '\n';
       }
-    } else if (string(args[0]) == "health") {
+    } else if (prefix == "health") {
       string health_str;
-      get_health(health_str, (args.size() > 1) ? &rdata : NULL, jf);
+      get_health(health_str, detail == "detail" ? &rdata : NULL, jf);
       if (jf) {
         jf->flush(ss);
         ss << '\n';
       } else {
         ss << health_str;
       }
-    } else if (string(args[0]) == "df") {
-      if (args.size() > 1) {
-        if (string(args[1]) != "detail") {
-          r = -EINVAL;
-          rs = "usage: df [detail]";
-          goto out;
-        }
-      }
-      bool verbose = (args.size() > 1);
+    } else if (prefix == "df") {
+      bool verbose = (detail == "detail");
       if (jf)
         jf->open_object_section("stats");
 
@@ -2667,7 +2657,7 @@ void Monitor::handle_command(MMonCommand *m)
     }
     rs = ss.str();
     r = 0;
-  } else if (m->cmd[0] == "report") {
+  } else if (prefix == "report") {
     if (!access_r) {
       r = -EACCES;
       rs = "access denied";
@@ -2710,7 +2700,7 @@ void Monitor::handle_command(MMonCommand *m)
     rdata.append(ss2.str());
     rs = string();
     r = 0;
-  } else if (m->cmd[0] == "quorum_status") {
+  } else if (prefix == "quorum_status") {
     if (!access_r) {
       r = -EACCES;
       rs = "access denied";
@@ -2726,7 +2716,7 @@ void Monitor::handle_command(MMonCommand *m)
     _quorum_status(ss);
     rs = ss.str();
     r = 0;
-  } else if (m->cmd[0] == "mon_status") {
+  } else if (prefix == "mon_status") {
     if (!access_r) {
       r = -EACCES;
       rs = "access denied";
@@ -2736,36 +2726,33 @@ void Monitor::handle_command(MMonCommand *m)
     _mon_status(ss);
     rs = ss.str();
     r = 0;
-  } else if (m->cmd[0] == "sync") {
+  } else if (prefix == "sync status") {
       if (!access_r) {
 	r = -EACCES;
 	rs = "access denied";
 	goto out;
       }
-      if (m->cmd[1] == "status") {
-	stringstream ss;
-	_sync_status(ss);
-	rs = ss.str();
-	r = 0;
-      } else if (m->cmd[1] == "force") {
-        if (m->cmd.size() < 4 || m->cmd[2] != "--yes-i-really-mean-it"
-            || m->cmd[3] != "--i-know-what-i-am-doing") {
-          r = -EINVAL;
-          rs = "are you SURE? this will mean the monitor store will be "
-               "erased.  pass '--yes-i-really-mean-it "
-               "--i-know-what-i-am-doing' if you really do.";
-          goto out;
-        }
-	stringstream ss;
-	_sync_force(ss);
-	rs = ss.str();
-	r = 0;
-      } else {
-	rs = "unknown command";
-	r = -EINVAL;
-	goto out;
-      }
-  } else if (m->cmd[0] == "heap") {
+      stringstream ss;
+      _sync_status(ss);
+      rs = ss.str();
+      r = 0;
+  } else if (prefix == "sync force") {
+    string validate1, validate2;
+    getval(cmdmap, "validate1", validate1);
+    getval(cmdmap, "validate2", validate2);
+    if (validate1 != "--yes-i-really-mean-it" ||
+	validate2 != "--i-know-what-i-am-doing") {
+      r = -EINVAL;
+      rs = "are you SURE? this will mean the monitor store will be "
+	   "erased.  pass '--yes-i-really-mean-it "
+	   "--i-know-what-i-am-doing' if you really do.";
+      goto out;
+    }
+    stringstream ss;
+    _sync_force(ss);
+    rs = ss.str();
+    r = 0;
+  } else if (prefix == "heap") {
     if (!access_all) {
       r = -EACCES;
       rs = "access denied";
@@ -2774,36 +2761,35 @@ void Monitor::handle_command(MMonCommand *m)
     if (!ceph_using_tcmalloc())
       rs = "tcmalloc not enabled, can't use heap profiler commands\n";
     else {
+      string heapcmd;
+      getval(cmdmap, "heapcmd", heapcmd);
       ostringstream ss;
-      ceph_heap_profiler_handle_command(m->cmd, ss);
+      // XXX vector, change at callee or make vector here?
+      vector<string> heapcmd_vec;
+      get_str_vec(heapcmd, heapcmd_vec);
+      ceph_heap_profiler_handle_command(heapcmd_vec, ss);
       rs = ss.str();
     }
-  } else if (m->cmd[0] == "quorum") {
+  } else if (prefix == "quorum") {
     if (!access_all) {
       r = -EACCES;
       rs = "access denied";
       goto out;
     }
-    if (m->cmd.size() < 2) {
-      r = -EINVAL;
-      rs = "'quorum' requires an argument: 'exit' or 'enter'";
-      goto out;
-    }
-    if (m->cmd[1] == "exit") {
+    string quorumcmd;
+    getval(cmdmap, "quorumcmd", quorumcmd);
+    if (quorumcmd == "exit") {
       reset();
       start_election();
       elector.stop_participating();
       rs = "stopped responding to quorum, initiated new election";
       r = 0;
-    } else if (m->cmd[1] == "enter") {
+    } else if (quorumcmd == "enter") {
       elector.start_participating();
       reset();
       start_election();
       rs = "started responding to quorum, initiated new election";
       r = 0;
-    } else {
-      rs = "unknown quorum subcommand; use exit or enter";
-      r = -EINVAL;
     }
   }
 
