@@ -107,7 +107,7 @@ class CephInt(CephArgtype):
                 self.range = list()
             else:
                 self.range = list(range.split('|'))
-                self.range = map(int, self.range)
+                self.range = map(long, self.range)
         else:
             self.range = range
 
@@ -308,10 +308,14 @@ class CephPgid(CephArgtype):
         return '<pgid>'
 
 """
-Name, or type.id, where type is osd|mon|client|mds, and id is a base10 int
+Name, or type.id, where type is osd|mon|client|mds, and id is a base10 int.
+Also accept '*'
 """
 class CephName(CephArgtype):
     def valid(self, s, partial=False):
+        if s == '*':
+            self.val = s
+            return True
         if s.find('.') == -1:
             raise ArgumentFormat('no .')
         t, i = s.split('.')
