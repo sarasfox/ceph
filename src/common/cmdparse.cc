@@ -55,7 +55,7 @@ cmdmap_from_json(std::vector<string> cmd, map<string, cmd_vartype> *mapp, string
 	break;
 
       case json_spirit::int_type:
-	(*mapp)[it->first] = it->second.get_uint64();
+	(*mapp)[it->first] = it->second.get_int64();
 	break;
 
       case json_spirit::real_type:
