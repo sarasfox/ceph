@@ -371,7 +371,7 @@ int do_command2(CephToolCtx *ctx,
 
 void do_status(CephToolCtx *ctx, bool shutdown) {
   vector<string> cmd;
-  cmd.push_back("status");
+  cmd.push_back("{\"prefix\": \"status\"}");
   bufferlist bl;
 
   do_command(ctx, cmd, bl, bl);
