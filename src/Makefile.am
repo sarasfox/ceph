@@ -100,12 +100,12 @@ bin_PROGRAMS += ceph-mds
 ceph_mds_CXXFLAGS = ${AM_CXXFLAGS}
 
 # admin tools
-ceph_SOURCES = \
+cephbin_SOURCES = \
 	tools/ceph.cc \
 	tools/common.cc \
 	mon/PGMap.cc
-ceph_LDADD = $(LIBGLOBAL_LDA) $(LIBEDIT_LIBS) libosdc.la
-ceph_CXXFLAGS = ${AM_CXXFLAGS}
+cephbin_LDADD = $(LIBGLOBAL_LDA) $(LIBEDIT_LIBS) libosdc.la
+cephbin_CXXFLAGS = ${AM_CXXFLAGS}
 
 ceph_conf_SOURCES = ceph_conf.cc
 ceph_conf_LDADD = $(LIBGLOBAL_LDA)
@@ -119,7 +119,7 @@ ceph_filestore_dump_LDADD = libosd.a $(LIBOS_LDA) $(LIBGLOBAL_LDA) -lboost_progr
 if LINUX
 ceph_filestore_dump_LDADD += -ldl
 endif
-bin_PROGRAMS += ceph ceph-conf ceph-authtool ceph_filestore_dump
+bin_PROGRAMS += cephbin ceph-conf ceph-authtool ceph_filestore_dump
 
 monmaptool_SOURCES = monmaptool.cc
 monmaptool_LDADD = $(LIBGLOBAL_LDA)
@@ -158,7 +158,7 @@ ceph_syn_LDADD = libclient.la $(LIBGLOBAL_LDA)
 bin_PROGRAMS += ceph-syn
 
 base: ceph-mon ceph-osd ceph-mds \
-	ceph cephfs \
+	cephbin cephfs \
 	ceph-syn \
 	rados radosgw librados-config \
 	ceph-conf monmaptool osdmaptool crushtool ceph-authtool \

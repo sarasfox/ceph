@@ -5,9 +5,9 @@ Makefile
 /.git_version
 /.libs
 /acconfig.h*
-/ceph
 /cephfs
 /crushtool
+/cephbin
 /ceph-authtool
 /ceph-conf
 /ceph-coverage
