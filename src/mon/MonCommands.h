@@ -27,6 +27,7 @@ COMMAND("auth get type=CephName,name=entity", "write keyring file with requested
 COMMAND("auth get-key type=CephName,name=entity", "display requested key")
 COMMAND("auth print-key type=CephName,name=entity", "display requested key")
 COMMAND("auth print_key type=CephName,name=entity", "display requested key")
+COMMAND("auth list", "list authentication state")
 COMMAND("auth import", "auth import: read keyring file from input")
 COMMAND("auth add type=CephName,name=entity type=CephString,name=caps,n=N,req=false", "add auth info for <name> from input file, or random key if no input given, and/or any caps specified in the command")
 COMMAND("auth get-or-create-key type=CephName,name=entity type=CephString,name=caps,n=N,req=false", "get, or add, key for <name> from system/caps pairs specified in the command.  If key already exists, any given caps must match the existing caps for that key.")
