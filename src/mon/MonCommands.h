@@ -79,7 +79,7 @@ COMMAND("mds rmfailed type=CephInt,range=0,name=who", "remove failed mds")
  * Monmap commands
  */
 COMMAND("mon stat", "dump monitor status (monmap)")
-COMMAND("mon getmap type=CephInt,range=0,name=epoch", "get monmap")
+COMMAND("mon getmap type=CephInt,range=0,name=epoch,req=false", "get monmap")
 COMMAND("mon tell type=CephString,name=who type=CephString,n=N,name=args", "send command to specific monitor(s)")
 COMMAND("mon add type=CephString,name=name type=CephIPAddr,name=addr", "add new monitor named <name> at <addr>")
 COMMAND("mon remove type=CephString,name=name", "remove monitor named <name>")
@@ -88,9 +88,9 @@ COMMAND("mon remove type=CephString,name=name", "remove monitor named <name>")
  * OSD commands
  */
 COMMAND("osd stat", "print summary of OSD map")
-COMMAND("osd tree type=CephInt,range=0,name=epoch", "print OSD tree")
+COMMAND("osd tree type=CephInt,range=0,name=epoch,req=false", "print OSD tree")
 COMMAND("osd ls type=CephInt,range=0,name=epoch", "show all OSD ids")
-COMMAND("osd getmap type=CephInt,range=0,name=epoch", "get OSD map")
+COMMAND("osd getmap type=CephInt,range=0,name=epoch,req=false", "get OSD map")
 COMMAND("osd getcrushmap type=CephInt,range=0,name=epoch", "get CRUSH map")
 COMMAND("osd getmaxosd", "show largest OSD id")
 COMMAND("osd tell type=CephString,name=who type=CephString,name=args,n=N", "send command to particular osd")
