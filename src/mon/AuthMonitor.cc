@@ -656,7 +656,7 @@ bool AuthMonitor::prepare_command(MMonCommand *m)
   getval(cmdmap, "caps", caps);
   vector<string>caps_vec;
   if (!caps.empty())
-    get_str_vec(caps, caps_vec);
+    get_str_vec(caps, " ", caps_vec);
 
   string entity_name;
   getval(cmdmap, "entity", entity_name);

@@ -1898,7 +1898,7 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
     string args;
     getval(cmdmap, "args", args);
     vector<string> argvec;
-    get_str_vec(args, argvec);
+    get_str_vec(args, " ", argvec);
     if (whostr == "*") {
       for (int i = 0; i < osdmap.get_max_osd(); ++i)
 	if (osdmap.is_up(i))
@@ -2256,13 +2256,13 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
 	name = "osd." + stringify(id);
       }
 
-      float weight;
+      double weight;
       getval(cmdmap, "weight", weight);
 
       string args;
       getval(cmdmap, "args", args);
       vector<string> argvec;
-      get_str_vec(args, argvec);
+      get_str_vec(args, " ", argvec);
       map<string,string> loc;
       parse_loc_map(argvec, &loc);
 
@@ -2307,13 +2307,13 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
       }
 
       string name = "osd." + stringify(id);
-      float weight;
+      double weight;
       getval(cmdmap, "weight", weight);
 
       string args;
       getval(cmdmap, "args", args);
       vector<string> argvec;
-      get_str_vec(args, argvec);
+      get_str_vec(args, " ", argvec);
       map<string,string> loc;
       parse_loc_map(argvec, &loc);
 
@@ -2355,7 +2355,7 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
       string args;
       getval(cmdmap, "args", args);
       vector<string> argvec;
-      get_str_vec(args, argvec);
+      get_str_vec(args, " ", argvec);
       map<string,string> loc;
       parse_loc_map(argvec, &loc);
 
@@ -2456,7 +2456,7 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
 	ss << "device '" << name << "' is not a leaf in the crush map";
 	break;
       }
-      float w;
+      double w;
       getval(cmdmap, "weight", w);
 
       err = newcrush.adjust_item_weightf(g_ceph_context, id, w);
@@ -2659,7 +2659,7 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
     string ids;
     getval(cmdmap, "ids", ids);
     vector<string> idvec;
-    get_str_vec(ids, idvec);
+    get_str_vec(ids, " ", idvec);
     for (unsigned j = 0; j < idvec.size(); j++) {
       long osd = parse_osd_id(idvec[j].c_str(), &ss);
       if (osd < 0) {
@@ -2718,9 +2718,9 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
   } else if (prefix == "osd reweight") {
     int64_t id;
     getval(cmdmap, "id", id);
-    float w;
+    double w;
     getval(cmdmap, "weight", w);
-    long ww = (int)((float)CEPH_OSD_IN*w);
+    long ww = (int)((double)CEPH_OSD_IN*w);
     if (ww < 0L) {
       ss << "weight must be > 0";
       err = -EINVAL;
