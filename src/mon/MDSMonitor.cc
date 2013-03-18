@@ -625,9 +625,8 @@ bool MDSMonitor::preprocess_command(MMonCommand *m)
     string whostr;
     getval(cmdmap, "who", whostr);
     string args;
-    getval(cmdmap, "args", args);
     vector<string>args_vec;
-    get_str_vec(args, args_vec);
+    getval(cmdmap, "args", args_vec);
 
     if (whostr == "*") {
       r = -ENOENT;

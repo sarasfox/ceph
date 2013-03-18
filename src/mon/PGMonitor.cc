@@ -1126,10 +1126,11 @@ bool PGMonitor::preprocess_command(MMonCommand *m)
       f = 0;
     stringstream ds;
     if (f) {
-      std::set<string> what;
-      string dumpcontents;
-      getval(cmdmap, "dumpcontents", dumpcontents, string("all"));
-      get_str_set(dumpcontents, "|", what);
+      vector<string> dumpcontents;
+      getval(cmdmap, "dumpcontents", dumpcontents);
+      set<string>what(dumpcontents.begin(), dumpcontents.end());
+      if (what.empty())
+	what.insert("all");
       if (what.count("all")) {
 	f->open_object_section("pg_map");
 	pg_map.dump(f);
@@ -1159,18 +1160,13 @@ bool PGMonitor::preprocess_command(MMonCommand *m)
     ss << "dumped " << what << " in format " << format;
     r = 0;
   } else if (prefix == "pg dump_stuck") {
-    std::string stuckops;
-    getval(cmdmap, "stuckops", stuckops, string("unclean"));
-
-    std::list<string>stuckop_list;
-    get_str_list(stuckops, stuckop_list);
-    std::vector<const char *>stuckop_vec;
-    for (std::list<string>::iterator it = stuckop_list.begin();
-	 it != stuckop_list.end(); it++) {
-      stuckop_vec.push_back(it->c_str());
-    }
-
-    r = dump_stuck_pg_stats(ss, rdata, stuckop_vec);
+    vector<string> stuckop_vec;
+    string format;
+    getval(cmdmap, "stuckops", stuckop_vec);
+    getval(cmdmap, "format", format, string("plain"));
+    if (stuckop_vec.empty())
+      stuckop_vec.push_back("unclean");
+    r = dump_stuck_pg_stats(ss, rdata, format, stuckop_vec);
   } else if (prefix == "pg map") {
     pg_t pgid;
     r = -EINVAL;
@@ -1529,12 +1525,15 @@ void PGMonitor::check_full_osd_health(list<pair<health_status_t,string> >& summa
 
 int PGMonitor::dump_stuck_pg_stats(ostream& ss,
 				   bufferlist& rdata,
-				   vector<const char*>& args) const
+				   string format,
+				   vector<string>& args) const
 {
-  string format = "plain";
   string val;
   int threshold = g_conf->mon_pg_stuck_threshold;
+#if 0
+  // XXX DJM
   int seconds;
+#endif
   ostringstream err;
 
   PGMap::StuckPG stuck_type;
@@ -1546,19 +1545,13 @@ int PGMonitor::dump_stuck_pg_stats(ostream& ss,
   if (type == "stale")
     stuck_type = PGMap::STUCK_STALE;
 
+  // XXX DJM not handled.  Need --threshold
+#if 0
   for (std::vector<const char*>::iterator i = args.begin() + 2;
        i != args.end(); ) {
-    if (ceph_argparse_double_dash(args, i)) {
-      break;
-    } else if (ceph_argparse_witharg(args, i, &val,
-				     "-f", "--format", (char*)NULL)) {
-      if (val != "json" && val != "plain") {
-	ss << "format must be json or plain";
-	return -EINVAL;
-      }
-      format = val;
     } else if (ceph_argparse_withint(args, i, &seconds, &err,
 				     "-t", "--threshold", (char*)NULL)) {
+      // XXX DJM not handled
       if (!err.str().empty()) {
 	ss << err.str();
 	return -EINVAL;
@@ -1581,6 +1574,7 @@ int PGMonitor::dump_stuck_pg_stats(ostream& ss,
       return -EINVAL;
     }
   }
+#endif
 
   utime_t now(ceph_clock_now(g_ceph_context));
   utime_t cutoff = now - utime_t(threshold, 0);

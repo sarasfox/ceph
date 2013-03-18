@@ -1895,10 +1895,8 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
   } else if (prefix == "osd tell") {
     string whostr;
     getval(cmdmap, "who", whostr);
-    string args;
-    getval(cmdmap, "args", args);
     vector<string> argvec;
-    get_str_vec(args, " ", argvec);
+    getval(cmdmap, "args", argvec);
     if (whostr == "*") {
       for (int i = 0; i < osdmap.get_max_osd(); ++i)
 	if (osdmap.is_up(i))
@@ -2260,9 +2258,8 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
       getval(cmdmap, "weight", weight);
 
       string args;
-      getval(cmdmap, "args", args);
       vector<string> argvec;
-      get_str_vec(args, " ", argvec);
+      getval(cmdmap, "args", argvec);
       map<string,string> loc;
       parse_loc_map(argvec, &loc);
 
@@ -2311,9 +2308,8 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
       getval(cmdmap, "weight", weight);
 
       string args;
-      getval(cmdmap, "args", args);
       vector<string> argvec;
-      get_str_vec(args, " ", argvec);
+      getval(cmdmap, "args", argvec);
       map<string,string> loc;
       parse_loc_map(argvec, &loc);
 
@@ -2353,9 +2349,8 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
       getval(cmdmap, "name", name);
 
       string args;
-      getval(cmdmap, "args", args);
       vector<string> argvec;
-      get_str_vec(args, " ", argvec);
+      getval(cmdmap, "args", argvec);
       map<string,string> loc;
       parse_loc_map(argvec, &loc);
 
@@ -2657,9 +2652,8 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
     bool any = false;
     // can't do array in map yet
     string ids;
-    getval(cmdmap, "ids", ids);
     vector<string> idvec;
-    get_str_vec(ids, " ", idvec);
+    getval(cmdmap, "ids", idvec);
     for (unsigned j = 0; j < idvec.size(); j++) {
       long osd = parse_osd_id(idvec[j].c_str(), &ss);
       if (osd < 0) {

@@ -640,6 +640,10 @@ bool AuthMonitor::prepare_command(MMonCommand *m)
   }
 
   string prefix;
+  vector<string>caps_vec;
+  string entity_name;
+  EntityName entity;
+
   getval(cmdmap, "prefix", prefix);
 
   vector<string> prefix_vec;
@@ -652,15 +656,14 @@ bool AuthMonitor::prepare_command(MMonCommand *m)
     return true;
   }
 
-  string caps;
-  getval(cmdmap, "caps", caps);
-  vector<string>caps_vec;
-  if (!caps.empty())
-    get_str_vec(caps, " ", caps_vec);
+  getval(cmdmap, "caps", caps_vec);
+  if ((caps_vec.size() % 2) != 0) {
+    ss << "bad capabilities request; odd number of arguments";
+    err = -EINVAL;
+    goto done;
+  }
 
-  string entity_name;
   getval(cmdmap, "entity", entity_name);
-  EntityName entity;
   if (!entity_name.empty() && !entity.from_str(entity_name)) {
     ss << "bad entity name";
     err = -EINVAL;
@@ -713,8 +716,8 @@ bool AuthMonitor::prepare_command(MMonCommand *m)
     auth_inc.op = KeyServerData::AUTH_INC_ADD;
 
     for (vector<string>::iterator it = caps_vec.begin();
-	 it != caps_vec.end(); it++)
-      ::encode(*it, auth_inc.auth.caps[*it]);
+	 it != caps_vec.end(); it += 2)
+      ::encode(*(it+1), auth_inc.auth.caps[*it]);
 
     dout(10) << " importing " << auth_inc.name << dendl;
     dout(30) << "    " << auth_inc.auth << dendl;
@@ -734,7 +737,7 @@ bool AuthMonitor::prepare_command(MMonCommand *m)
     EntityAuth entity_auth;
     if (mon->key_server.get_auth(entity, entity_auth)) {
       for (vector<string>::iterator it = caps_vec.begin();
-	   it + 1 != caps_vec.end(); it += 2) {
+	   it != caps_vec.end(); it += 2) {
 	string sys = *it;
 	bufferlist cap;
 	::encode(*(it+1), cap);
@@ -780,7 +783,7 @@ bool AuthMonitor::prepare_command(MMonCommand *m)
     auth_inc.name = entity;
     auth_inc.auth.key.create(g_ceph_context, CEPH_CRYPTO_AES);
     for (vector<string>::iterator it = caps_vec.begin();
-	 it + 1 != caps_vec.end(); it += 2)
+	 it != caps_vec.end(); it += 2)
       ::encode(*(it+1), auth_inc.auth.caps[*it]);
 
     push_cephx_inc(auth_inc);
@@ -808,7 +811,7 @@ bool AuthMonitor::prepare_command(MMonCommand *m)
 
     map<string,bufferlist> newcaps;
     for (vector<string>::iterator it = caps_vec.begin();
-	 it + 1 != caps_vec.end(); it += 2)
+	 it != caps_vec.end(); it += 2)
       ::encode(*(it+1), newcaps[*it]);
 
     auth_inc.op = KeyServerData::AUTH_INC_ADD;

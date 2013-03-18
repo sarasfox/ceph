@@ -55,11 +55,25 @@ cmdmap_from_json(vector<string> cmd, map<string, cmd_vartype> *mapp, stringstrea
       switch (it->second.type()) {
 
       case json_spirit::obj_type:
-      case json_spirit::array_type:
       default:
 	throw(runtime_error("JSON array/object not allowed" + fullcmd));
         break;
 
+      case json_spirit::array_type:
+	{
+	  // array is a vector of values.  Unpack it to a vector
+	  // of strings, the only type we handle.
+	  vector<json_spirit::mValue> spvals = it->second.get_array();
+	  vector<string> *outvp = new vector<string>;
+	  for (vector<json_spirit::mValue>::iterator sv = spvals.begin();
+	       sv != spvals.end(); sv++) {
+	    if (sv->type() != json_spirit::str_type)
+	      throw(runtime_error("Can't handle arrays of non-strings"));
+	    outvp->push_back(sv->get_str());
+	  }
+	  (*mapp)[it->first] = *outvp;
+	}
+	break;
       case json_spirit::str_type:
 	(*mapp)[it->first] = it->second.get_str();
 	break;

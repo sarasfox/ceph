@@ -271,10 +271,8 @@ bool MonmapMonitor::preprocess_command(MMonCommand *m)
     dout(20) << "got tell: " << m->cmd << dendl;
     string whostr;
     getval(cmdmap, "who", whostr);
-    string args;
-    getval(cmdmap, "args", args);
     vector<string> argvec;
-    get_str_vec(args, argvec);
+    getval(cmdmap, "args", argvec);
 
     if (whostr == "*") { // send to all mons and do myself
       for (unsigned i = 0; i < mon->monmap->size(); ++i) {
