@@ -1,3 +1,17 @@
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// vim: ts=8 sw=2 smarttab
+/*
+ * Ceph - scalable distributed file system
+ *
+ * Copyright (C) 2013 Inktank Storage, Inc.
+ *
+ * This is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public
+ * License version 2, as published by the Free Software
+ * Foundation.  See file COPYING.
+ *
+ */
+
 #include "common/cmdparse.h"
 #include "json_spirit/json_spirit.h"
 
@@ -11,11 +25,11 @@
 using namespace std;
 
 bool
-cmdmap_from_json(std::vector<string> cmd, map<string, cmd_vartype> *mapp, stringstream &ss)
+cmdmap_from_json(vector<string> cmd, map<string, cmd_vartype> *mapp, stringstream &ss)
 {
   json_spirit::mValue v;
 
-  std::string fullcmd;
+  string fullcmd;
   // First, join all cmd strings
   for (vector<string>::iterator it = cmd.begin();
        it != cmd.end(); it++)
@@ -23,9 +37,9 @@ cmdmap_from_json(std::vector<string> cmd, map<string, cmd_vartype> *mapp, string
 
   try {
     if (!json_spirit::read(fullcmd, v))
-      throw std::runtime_error("unparseable JSON" + fullcmd);
+      throw runtime_error("unparseable JSON" + fullcmd);
     if (v.type() != json_spirit::obj_type)
-      throw(std::runtime_error("not JSON object" + fullcmd));
+      throw(runtime_error("not JSON object" + fullcmd));
 
     // allocate new mObject (map) to return
     // make sure all contents are simple types (not arrays or objects)
@@ -43,7 +57,7 @@ cmdmap_from_json(std::vector<string> cmd, map<string, cmd_vartype> *mapp, string
       case json_spirit::obj_type:
       case json_spirit::array_type:
       default:
-	throw(std::runtime_error("JSON array/object not allowed" + fullcmd));
+	throw(runtime_error("JSON array/object not allowed" + fullcmd));
         break;
 
       case json_spirit::str_type:
@@ -64,7 +78,7 @@ cmdmap_from_json(std::vector<string> cmd, map<string, cmd_vartype> *mapp, string
       }
     }
     return true;
-  } catch (std::runtime_error e) {
+  } catch (runtime_error e) {
     ss << e.what();
     return false;
   }
