@@ -672,9 +672,9 @@ def validate(args, signature):
             validate_one(word, desc)
 
             if desc.name in d:
-                d[desc.name] += ' ' + desc.instance.val
+                d[desc.name] += [desc.instance.val]
             else:
-                d[desc.name] = desc.instance.val
+                d[desc.name] = [desc.instance.val]
         argpos += 1
     # print "validate returning", d
     return d
@@ -781,6 +781,14 @@ def main():
                 pass
     if not found:
         print >> sys.stderr, '{}: invalid command'.format(parsed_args.args)
+    # special case: combine prefix into a single string 
+    if 'prefix' in valid_dict:
+        valid_dict['prefix'] = ' '.join(valid_dict['prefix'])
+
+    # translate any single-item lists into simple values
+    for key, val in valid_dict.iteritems():
+        if isinstance(val, types.ListType) and len(val) == 1:
+            valid_dict[key] = val[0]
         return 1
 
     if parsed_args.output_format:
