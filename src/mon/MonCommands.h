@@ -51,7 +51,7 @@ COMMAND("quorum_status", "report status of monitor quorum")
 COMMAND("mon_status", "report status of monitors")
 COMMAND("sync status", "report status of monitors")
 COMMAND("sync force type=CephChoices,strings=--yes-i-really-mean-it,name=validate1 type=CephChoices,strings=--i-know-what-i-am-doing,name=validate2", "force sync of and clear monitor store")
-COMMAND("heap type=CephChoices,strings=dump|start_profiler|stop_profiler|release|stats,name=heapcmd", "show debug help info (available only if compiled with tcmalloc")
+COMMAND("heap type=CephChoices,strings=dump|start_profiler|stop_profiler|release|stats,name=heapcmd", "show heap usage info (available only if compiled with tcmalloc")
 COMMAND("quorum type=CephChoices,strings=enter|exit,n=1,name=quorumcmd", "enter or exit quorum")
 
 /*
