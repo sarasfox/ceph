@@ -690,6 +690,42 @@ def try_validate(s, sig):
         print '{!r} failed: {}'.format(s, e)
     print
 
+def parse_cmdargs(usage=''):
+    parser = argparse.ArgumentParser(description='Frontend for ceph CLI',
+                                     usage=usage)
+    parser.add_argument('-c', dest='cephconf',
+                        help='ceph configuration file')
+    parser.add_argument('-i', '--in-file', dest='input_file',
+                        help='input file')
+    parser.add_argument('-o', '--out-file', dest='output_file',
+                        help='output file')
+    parser.add_argument('-k', '--keyring', dest='keyring_file',
+                        help='keyring file')
+    parser.add_argument('--admin-daemon', dest='admin_socket',
+                        help='submit admin-socket commands (\"help\" for help')
+    parser.add_argument('-s', '--status', action='store_true', help='show cluster status')
+    parser.add_argument('-w', '--watch', action='store_true', help='watch live cluster changes')
+    parser.add_argument('--watch-debug', dest='watch_level', 
+                        action='store_const', const='log-debug',
+                        help='watch debug events')
+    parser.add_argument('--watch-info', dest='watch_level',
+                        action='store_const', const='log-info',
+                        help='watch info events')
+    parser.add_argument('--watch-sec', dest='watch_level',
+                        action='store_const', const='log-sec',
+                        help='watch sec events')
+    parser.add_argument('--watch-warn', dest='watch_level',
+                        action='store_const', const='log-warn',
+                        help='watch warn events')
+    parser.add_argument('--watch-error', dest='watch_level',
+                        action='store_const', const='log-error',
+                        help='watch error events')
+    parser.add_argument('-v', '--verbose', action="store_true")
+    parser.add_argument('--concise')
+    parser.add_argument('-f', '--format', choices=['json', 'xml', 'plain'], dest='output_format')
+    # returns a Namespace with the parsed args, and a list of all extras
+    return parser.parse_known_args()
+
 def get_process_output(args):
     p = subprocess.Popen(args, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
@@ -699,88 +735,111 @@ def get_process_output(args):
         sys.exit(1)
     return outdata
 
+def do_command(command, d, verbose=False):
+
+    command.append(json.dumps(d))
+    if verbose:
+        print >> sys.stderr, "invoking ", command
+    p = subprocess.Popen(command, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+    outdata, errdata = p.communicate()
+    if len(errdata):
+        print >> sys.stderr, errdata
+    print outdata
+    return p.returncode
+
 def main():
     #global cluster
     #cluster = rados.Rados(conffile='')
 
     command = os.environ.get('COMMAND')
     if not command:
-        command = "./ceph"
+        command = "./cephbin"
+    command = [command]
 
     # fetch JSON sigs from command
     # each line contains one command signature (a placeholder name
     # of the form 'cmdNNN' followed by an array of argument descriptors)
     # as part of the validated argument JSON object
 
-    outdata = get_process_output([command, 'get_command_descriptions'])
+    outdata = get_process_output(command + ['get_command_descriptions'])
     sigdict = parse_json_funcsig(outdata.strip())
 
-    usage = ''
+    fullusage = ''
     for op, sigandhelp in sigdict.iteritems():
-        usage += '{}: {}\n'.format(concise_sig(sigandhelp['sig']),
+        fullusage += '{}: {}\n'.format(concise_sig(sigandhelp['sig']),
                                        sigandhelp['helptext'])
-    parser = argparse.ArgumentParser(description='Frontend for ceph CLI',
-                                     usage=usage)
-    parser.add_argument('-v', '--verbose', action='count')
-    parser.add_argument('-f', '--format', choices=['json', 'xml', 'plain'], dest='output_format')
-    parser.add_argument('args', nargs=argparse.REMAINDER)
-    parsed_args = parser.parse_args()
+    parsed_args, childargs = parse_cmdargs()
 
-    if parsed_args.verbose:
+    verbose = parsed_args.verbose
+    if verbose:
         for cmdtag in sorted(sigdict.keys()):
             sigandhelp = sigdict[cmdtag]
             sig = sigandhelp['sig']
             print '{}: {}'.format(cmdtag, concise_sig(sig))
 
-    if len(parsed_args.args) == 0:
-        print >> sys.stderr, 'No command given'
-        return 1
+    got_command = False
+    if parsed_args.status:
+        command.append('-s')
+        got_command = True
+    if parsed_args.watch:
+        command.append('-w')
+        got_command = True
+
+    if parsed_args.input_file:
+        command.extend(['-i', parsed_args.input_file])
+    if parsed_args.output_file:
+        command.extend(['-o', parsed_args.output_file])
+    if parsed_args.keyring_file:
+        command.extend(['-k', parsed_args.keyring_file])
+
 
     # validate input args against list of sigs
 
-    # look for best match, accumulate possibles in bestsigs
-    # (so we can maybe give a more-useful error message)
     found = None
-    best_match_cnt = 0
-    bestsigs = []
-    for op, sigandhelp in sigdict.iteritems():
-        sig = sigandhelp['sig']
-        helptext = sigandhelp['helptext']
-        matched = matchnum(parsed_args.args, sig, partial=True)
-        if (matched > best_match_cnt):
-            if parsed_args.verbose:
-                print >> sys.stderr, \
-                    "better match: {} > {}:{} ".format(matched,
-                                                       best_match_cnt, sig)
-            best_match_cnt = matched
-            bestsigs = [{op:sigandhelp}]
-        elif matched == best_match_cnt:
-            if parsed_args.verbose:
-                print >> sys.stderr, \
-                    "equal match: {} > {}:{} ".format(matched,
-                                                       best_match_cnt, sig)
-            bestsigs.append({op:sigandhelp})
-
-    if parsed_args.verbose:
-        print >> sys.stderr, "bestsigs: ", bestsigs
-
-    # for everything in bestsigs, look for a true match
-    for cmdsig in bestsigs:
-        for (cmdtag, sigandhelp) in cmdsig.iteritems():
+    valid_dict = {}
+    if childargs:
+        # look for best match, accumulate possibles in bestsigs
+        # (so we can maybe give a more-useful error message)
+        best_match_cnt = 0
+        bestsigs = []
+        for op, sigandhelp in sigdict.iteritems():
             sig = sigandhelp['sig']
-            try:
-                valid_dict = validate(parsed_args.args, sig)
-                found = sig
-                break
-            except ArgumentPrefix:
-                # this is common, and we don't want to whine about it
-                pass
-            except ArgumentError as e:
-                print >> sys.stderr, "almost {}: {}:\n** {}". \
-                                     format(cmdtag, concise_sig(sig), e)
-                pass
-    if not found:
-        print >> sys.stderr, '{}: invalid command'.format(parsed_args.args)
+            matched = matchnum(childargs, sig, partial=True)
+            if (matched > best_match_cnt):
+                if verbose:
+                    print >> sys.stderr, \
+                        "better match: {} > {}:{} ".format(matched,
+                                                           best_match_cnt, sig)
+                best_match_cnt = matched
+                bestsigs = [{op:sigandhelp}]
+            elif matched == best_match_cnt:
+                if verbose:
+                    print >> sys.stderr, \
+                        "equal match: {} > {}:{} ".format(matched,
+                                                           best_match_cnt, sig)
+                bestsigs.append({op:sigandhelp})
+
+        if verbose:
+            print >> sys.stderr, "bestsigs: ", bestsigs
+
+        # for everything in bestsigs, look for a true match
+        for cmdsig in bestsigs:
+            for (cmdtag, sigandhelp) in cmdsig.iteritems():
+                sig = sigandhelp['sig']
+                helptext = sigandhelp['helptext']
+                try:
+                    valid_dict = validate(childargs, sig)
+                    found = sig
+                    break
+                except ArgumentPrefix:
+                    # this is common, and we don't want to whine about it
+                    pass
+                except ArgumentError as e:
+                    print >> sys.stderr, "almost {}: {}: {}\n{}". \
+                        format(cmdtag, concise_sig(sig), e, helptext)
+                    pass
+
     # special case: combine prefix into a single string 
     if 'prefix' in valid_dict:
         valid_dict['prefix'] = ' '.join(valid_dict['prefix'])
@@ -789,13 +848,14 @@ def main():
     for key, val in valid_dict.iteritems():
         if isinstance(val, types.ListType) and len(val) == 1:
             valid_dict[key] = val[0]
+
+    if not (found or got_command):
+        print >> sys.stderr, '{}: invalid command'.format(childargs)
         return 1
 
     if parsed_args.output_format:
         valid_dict['format'] = parsed_args.output_format
-    cmd = [command, json.dumps(valid_dict)]
-    print >> sys.stderr, "invoking ", cmd
-    print get_process_output([command, json.dumps(valid_dict)])
+    sys.exit(do_command(command, valid_dict, verbose))
 
 ###
 # main
