@@ -5,6 +5,7 @@
 #include <map>
 #include <boost/variant.hpp>
 #include <vector>
+#include <stdexcept>
 
 typedef boost::variant<std::string, bool, int64_t, double, std::vector<std::string> > cmd_vartype;
 
@@ -20,7 +21,12 @@ getval(std::map<std::string, cmd_vartype>& cmdmap, std::string k, T& val)
     try {
       val = boost::get<T>(cmdmap[k]);
       return true;
-    } catch (boost::bad_get) { }
+    } catch (boost::bad_get) { 
+      // XXX this needs to be something different...clog, perhaps
+      std::ostringstream errstr;
+      errstr << "bad boost::get: key " << k << "is not type" << typeid(T).name();
+      throw std::runtime_error(errstr.str());
+    }
   }
   // either not found or bad type, return false
   return false;
