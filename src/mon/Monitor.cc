@@ -2471,6 +2471,7 @@ void Monitor::handle_command(MMonCommand *m)
   bool access_all;
 
   string prefix;
+  vector<string> prefix_vec;
   string module;
   string err;
   map<string, cmd_vartype> cmdmap;
@@ -2491,8 +2492,7 @@ void Monitor::handle_command(MMonCommand *m)
     goto out;
   }
 
-  getval(cmdmap, "prefix", prefix);
-  vector<string> prefix_vec;
+  cmd_getval(g_ceph_context, cmdmap, "prefix", prefix);
   get_str_vec(prefix, prefix_vec);
   module = prefix_vec[0];
   access_cmd = _allowed_command(session, prefix_vec);
@@ -2542,7 +2542,7 @@ void Monitor::handle_command(MMonCommand *m)
       goto out;
     }
     string logtext;
-    getval(cmdmap, "logtext", logtext);
+    cmd_getval(g_ceph_context, cmdmap, "logtext", logtext);
     stringstream ss;
     ss << logtext;
     clog.info(ss);
@@ -2568,7 +2568,7 @@ void Monitor::handle_command(MMonCommand *m)
       goto out;
     }
     string injected_args;
-    getval(cmdmap, "injected_args", injected_args);
+    cmd_getval(g_ceph_context, cmdmap, "injected_args", injected_args);
     if (!injected_args.empty()) {
       dout(0) << "parsing injected options '" << injected_args << "'" << dendl;
       ostringstream oss;
@@ -2591,9 +2591,9 @@ void Monitor::handle_command(MMonCommand *m)
     }
 
     string format;
-    getval(cmdmap, "format", format, string("plain"));
+    cmd_getval(g_ceph_context, cmdmap, "format", format, string("plain"));
     string detail;
-    getval(cmdmap, "detail", detail);
+    cmd_getval(g_ceph_context, cmdmap, "detail", detail);
 
     JSONFormatter *jf = NULL;
 
@@ -2729,8 +2729,8 @@ void Monitor::handle_command(MMonCommand *m)
       r = 0;
   } else if (prefix == "sync force") {
     string validate1, validate2;
-    getval(cmdmap, "validate1", validate1);
-    getval(cmdmap, "validate2", validate2);
+    cmd_getval(g_ceph_context, cmdmap, "validate1", validate1);
+    cmd_getval(g_ceph_context, cmdmap, "validate2", validate2);
     if (validate1 != "--yes-i-really-mean-it" ||
 	validate2 != "--i-know-what-i-am-doing") {
       r = -EINVAL;
@@ -2753,7 +2753,7 @@ void Monitor::handle_command(MMonCommand *m)
       rs = "tcmalloc not enabled, can't use heap profiler commands\n";
     else {
       string heapcmd;
-      getval(cmdmap, "heapcmd", heapcmd);
+      cmd_getval(g_ceph_context, cmdmap, "heapcmd", heapcmd);
       ostringstream ss;
       // XXX 1-element vector, change at callee or make vector here?
       vector<string> heapcmd_vec;
@@ -2768,7 +2768,7 @@ void Monitor::handle_command(MMonCommand *m)
       goto out;
     }
     string quorumcmd;
-    getval(cmdmap, "quorumcmd", quorumcmd);
+    cmd_getval(g_ceph_context, cmdmap, "quorumcmd", quorumcmd);
     if (quorumcmd == "exit") {
       reset();
       start_election();

@@ -200,7 +200,7 @@ bool MonmapMonitor::preprocess_command(MMonCommand *m)
   }
 
   string prefix;
-  getval(cmdmap, "prefix", prefix);
+  cmd_getval(g_ceph_context, cmdmap, "prefix", prefix);
   vector<string> prefix_vec;
   get_str_vec(prefix, prefix_vec);
 
@@ -226,10 +226,10 @@ bool MonmapMonitor::preprocess_command(MMonCommand *m)
 
   } else if (prefix == "mon dump") {
     string format;
-    getval(cmdmap, "format", format, string("plain"));
+    cmd_getval(g_ceph_context, cmdmap, "format", format, string("plain"));
     epoch_t epoch = 0;
     int64_t epochval;
-    getval(cmdmap, "epoch", epochval);
+    cmd_getval(g_ceph_context, cmdmap, "epoch", epochval);
     epoch = epochval;
 
     MonMap *p = mon->monmap;
@@ -270,9 +270,9 @@ bool MonmapMonitor::preprocess_command(MMonCommand *m)
   } else if (prefix == "mon tell") {
     dout(20) << "got tell: " << m->cmd << dendl;
     string whostr;
-    getval(cmdmap, "who", whostr);
+    cmd_getval(g_ceph_context, cmdmap, "who", whostr);
     vector<string> argvec;
-    getval(cmdmap, "args", argvec);
+    cmd_getval(g_ceph_context, cmdmap, "args", argvec);
 
     if (whostr == "*") { // send to all mons and do myself
       for (unsigned i = 0; i < mon->monmap->size(); ++i) {
@@ -348,7 +348,7 @@ bool MonmapMonitor::prepare_command(MMonCommand *m)
   }
 
   string prefix;
-  getval(cmdmap, "prefix", prefix);
+  cmd_getval(g_ceph_context, cmdmap, "prefix", prefix);
   vector<string> prefix_vec;
   get_str_vec(prefix, prefix_vec);
 
@@ -363,9 +363,9 @@ bool MonmapMonitor::prepare_command(MMonCommand *m)
 
   if (prefix == "mon add") {
     string name;
-    getval(cmdmap, "name", name);
+    cmd_getval(g_ceph_context, cmdmap, "name", name);
     string addrstr;
-    getval(cmdmap, "addr", addrstr);
+    cmd_getval(g_ceph_context, cmdmap, "addr", addrstr);
     entity_addr_t addr;
     bufferlist rdata;
 
@@ -398,7 +398,7 @@ bool MonmapMonitor::prepare_command(MMonCommand *m)
 
   } else if (prefix == "mon remove") {
     string name;
-    getval(cmdmap, "name", name);
+    cmd_getval(g_ceph_context, cmdmap, "name", name);
     if (!pending_map.contains(name)) {
       err = -ENOENT;
       ss << "mon " << name << " does not exist";

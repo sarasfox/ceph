@@ -537,7 +537,7 @@ bool MDSMonitor::preprocess_command(MMonCommand *m)
   }
 
   string prefix;
-  getval(cmdmap, "prefix", prefix);
+  cmd_getval(g_ceph_context, cmdmap, "prefix", prefix);
   vector<string> prefix_vec;
   get_str_vec(prefix, prefix_vec);
 
@@ -555,14 +555,14 @@ bool MDSMonitor::preprocess_command(MMonCommand *m)
     r = 0;
   } else if (prefix == "mds dump") {
     string format;
-    getval(cmdmap, "format", format, string("plain"));
+    cmd_getval(g_ceph_context, cmdmap, "format", format, string("plain"));
     string val;
     int64_t epocharg;
     epoch_t epoch;
     epoch = epocharg;
 
     MDSMap *p = &mdsmap;
-    if (getval(cmdmap, "epoch", epocharg)) {
+    if (cmd_getval(g_ceph_context, cmdmap, "epoch", epocharg)) {
       epoch = epocharg;
       bufferlist b;
       int err = get_version(epoch, b);
@@ -603,7 +603,7 @@ bool MDSMonitor::preprocess_command(MMonCommand *m)
     epoch_t e;
     int64_t epocharg;
     bufferlist b;
-    if (getval(cmdmap, "epoch", epocharg)) {
+    if (cmd_getval(g_ceph_context, cmdmap, "epoch", epocharg)) {
       e = epocharg;
       int err = get_version(e, b);
       if (err == -ENOENT) {
@@ -623,10 +623,10 @@ bool MDSMonitor::preprocess_command(MMonCommand *m)
     r = 0;
   } else if (prefix == "mds tell") {
     string whostr;
-    getval(cmdmap, "who", whostr);
+    cmd_getval(g_ceph_context, cmdmap, "who", whostr);
     string args;
     vector<string>args_vec;
-    getval(cmdmap, "args", args_vec);
+    cmd_getval(g_ceph_context, cmdmap, "args", args_vec);
 
     if (whostr == "*") {
       r = -ENOENT;
@@ -770,7 +770,7 @@ bool MDSMonitor::prepare_command(MMonCommand *m)
 
   string prefix;
 
-  getval(cmdmap, "prefix", prefix);
+  cmd_getval(g_ceph_context, cmdmap, "prefix", prefix);
 
   vector<string> prefix_vec;
   get_str_vec(prefix, prefix_vec);
@@ -785,7 +785,7 @@ bool MDSMonitor::prepare_command(MMonCommand *m)
   }
 
   string whostr;
-  getval(cmdmap, "who", whostr);
+  cmd_getval(g_ceph_context, cmdmap, "who", whostr);
   if (prefix == "mds stop" ||
       prefix == "mds deactivate") {
     int who = parse_pos_long(whostr.c_str(), &ss);
@@ -814,7 +814,7 @@ bool MDSMonitor::prepare_command(MMonCommand *m)
 
   } else if (prefix == "mds set_max_mds") {
     int64_t maxmds;
-    getval(cmdmap, "maxmds", maxmds);
+    cmd_getval(g_ceph_context, cmdmap, "maxmds", maxmds);
     if (maxmds < 0)
       goto out;
     pending_mdsmap.max_mds = maxmds;
@@ -825,7 +825,7 @@ bool MDSMonitor::prepare_command(MMonCommand *m)
     MDSMap map;
     map.decode(m->get_data());
     int64_t epochnum;
-    getval(cmdmap, "epoch", epochnum);
+    cmd_getval(g_ceph_context, cmdmap, "epoch", epochnum);
     epoch_t e = epochnum;
 
     if (pending_mdsmap.epoch == e) {
@@ -840,10 +840,10 @@ bool MDSMonitor::prepare_command(MMonCommand *m)
 
   } else if (prefix == "mds set_state") {
     int64_t gid;
-    if (!getval(cmdmap, "gid", gid))
+    if (!cmd_getval(g_ceph_context, cmdmap, "gid", gid))
       goto out;
     int64_t state;
-    getval(cmdmap, "state", state);
+    cmd_getval(g_ceph_context, cmdmap, "state", state);
     if (!pending_mdsmap.is_dne_gid(gid)) {
       MDSMap::mds_info_t& info = pending_mdsmap.get_info_gid(gid);
       info.state = state;
@@ -857,12 +857,12 @@ bool MDSMonitor::prepare_command(MMonCommand *m)
 
   } else if (prefix == "mds fail") {
     string who;
-    getval(cmdmap, "who", who);
+    cmd_getval(g_ceph_context, cmdmap, "who", who);
     r = fail_mds(ss, who);
 
   } else if (prefix == "mds rm") {
     int64_t gid;
-    getval(cmdmap, "gid", gid);
+    cmd_getval(g_ceph_context, cmdmap, "gid", gid);
     int state = pending_mdsmap.get_state_gid(gid);
     if (state == 0) {
       ss << "mds gid " << gid << " dne";
@@ -883,7 +883,7 @@ bool MDSMonitor::prepare_command(MMonCommand *m)
 
   } else if (prefix == "mds rmfailed") {
     int64_t w;
-    getval(cmdmap, "who", w);
+    cmd_getval(g_ceph_context, cmdmap, "who", w);
     pending_mdsmap.failed.erase(w);
     stringstream ss;
     ss << "removed failed mds." << w;

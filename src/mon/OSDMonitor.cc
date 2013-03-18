@@ -1773,7 +1773,7 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
   }
 
   string prefix;
-  getval(cmdmap, "prefix", prefix);
+  cmd_getval(g_ceph_context, cmdmap, "prefix", prefix);
   vector<string> prefix_vec;
   get_str_vec(prefix, prefix_vec);
 
@@ -1797,13 +1797,13 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
 	   prefix == "osd getcrushmap") {
 
     string format;
-    getval(cmdmap, "format", format, string("plain"));
+    cmd_getval(g_ceph_context, cmdmap, "format", format, string("plain"));
 
     string val;
 
     epoch_t epoch = 0;
     int64_t epochnum;
-    getval(cmdmap, "epoch", epochnum);
+    cmd_getval(g_ceph_context, cmdmap, "epoch", epochnum);
     epoch = epochnum;
 
     OSDMap *p = &osdmap;
@@ -1894,9 +1894,9 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
 
   } else if (prefix == "osd tell") {
     string whostr;
-    getval(cmdmap, "who", whostr);
+    cmd_getval(g_ceph_context, cmdmap, "who", whostr);
     vector<string> argvec;
-    getval(cmdmap, "args", argvec);
+    cmd_getval(g_ceph_context, cmdmap, "args", argvec);
     if (whostr == "*") {
       for (int i = 0; i < osdmap.get_max_osd(); ++i)
 	if (osdmap.is_up(i))
@@ -1922,7 +1922,7 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
 
   } else if (prefix  == "osd find") {
     int64_t osd;
-    getval(cmdmap, "id", osd);
+    cmd_getval(g_ceph_context, cmdmap, "id", osd);
     if (!osdmap.exists(osd)) {
       ss << "osd." << osd << " does not exist";
       r = -ENOENT;
@@ -1946,8 +1946,8 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
 
   } else if (prefix == "osd map") {
     string poolstr, objstr;
-    getval(cmdmap, "pool", poolstr);
-    getval(cmdmap, "object", objstr);
+    cmd_getval(g_ceph_context, cmdmap, "pool", poolstr);
+    cmd_getval(g_ceph_context, cmdmap, "object", objstr);
     int64_t pool = osdmap.lookup_pg_pool_name(poolstr.c_str());
     if (pool < 0) {
       ss << "pool " << poolstr << " does not exist";
@@ -1970,7 +1970,7 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
 	      prefix == "osd deep-scrub" ||
 	      prefix == "osd repair")) {
     string whostr;
-    getval(cmdmap, "who", whostr);
+    cmd_getval(g_ceph_context, cmdmap, "who", whostr);
     if (whostr == "*") {
       ss << "osds ";
       int c = 0;
@@ -2002,7 +2002,7 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
 
   } else if (prefix == "osd lspools") {
     int64_t auid;
-    getval(cmdmap, "auid", auid, int64_t(0));
+    cmd_getval(g_ceph_context, cmdmap, "auid", auid, int64_t(0));
     for (map<int64_t, pg_pool_t>::iterator p = osdmap.pools.begin();
 	 p != osdmap.pools.end();
 	 ++p) {
@@ -2196,7 +2196,7 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
   }
 
   string prefix;
-  getval(cmdmap, "prefix", prefix);
+  cmd_getval(g_ceph_context, cmdmap, "prefix", prefix);
   vector<string> prefix_vec;
   get_str_vec(prefix, prefix_vec);
 
@@ -2210,7 +2210,7 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
   }
 
   int64_t id;
-  bool osdid_present = getval(cmdmap, "id", id);
+  bool osdid_present = cmd_getval(g_ceph_context, cmdmap, "id", id);
 
   if (prefix == "osd setcrushmap" ||
       (prefix == "osd crush set" && !osdid_present)) {
@@ -2249,17 +2249,17 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
       }
 
       string name;
-      if (!getval(cmdmap, "name", name)) {
+      if (!cmd_getval(g_ceph_context, cmdmap, "name", name)) {
 	// new usage; infer name
 	name = "osd." + stringify(id);
       }
 
       double weight;
-      getval(cmdmap, "weight", weight);
+      cmd_getval(g_ceph_context, cmdmap, "weight", weight);
 
       string args;
       vector<string> argvec;
-      getval(cmdmap, "args", argvec);
+      cmd_getval(g_ceph_context, cmdmap, "args", argvec);
       map<string,string> loc;
       parse_loc_map(argvec, &loc);
 
@@ -2296,7 +2296,7 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
     do {
       // osd crush create-or-move <id> <initial_weight> <loc1> [<loc2> ...]
       int64_t id;
-      getval(cmdmap, "id", id);
+      cmd_getval(g_ceph_context, cmdmap, "id", id);
       if (!osdmap.exists(id)) {
 	err = -ENOENT;
 	ss << "osd." << m->cmd[3] << " does not exist.  create it before updating the crush map";
@@ -2305,11 +2305,11 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
 
       string name = "osd." + stringify(id);
       double weight;
-      getval(cmdmap, "weight", weight);
+      cmd_getval(g_ceph_context, cmdmap, "weight", weight);
 
       string args;
       vector<string> argvec;
-      getval(cmdmap, "args", argvec);
+      cmd_getval(g_ceph_context, cmdmap, "args", argvec);
       map<string,string> loc;
       parse_loc_map(argvec, &loc);
 
@@ -2346,11 +2346,11 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
     do {
       // osd crush move <name> <loc1> [<loc2> ...]
       string name;
-      getval(cmdmap, "name", name);
+      cmd_getval(g_ceph_context, cmdmap, "name", name);
 
       string args;
       vector<string> argvec;
-      getval(cmdmap, "args", argvec);
+      cmd_getval(g_ceph_context, cmdmap, "args", argvec);
       map<string,string> loc;
       parse_loc_map(argvec, &loc);
 
@@ -2402,7 +2402,7 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
       newcrush.decode(p);
 
       string name;
-      getval(cmdmap, "name", name);
+      cmd_getval(g_ceph_context, cmdmap, "name", name);
 
       if (!newcrush.name_exists(name.c_str())) {
 	err = -ENOENT;
@@ -2439,7 +2439,7 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
       newcrush.decode(p);
 
       string name;
-      getval(cmdmap, "name", name);
+      cmd_getval(g_ceph_context, cmdmap, "name", name);
       if (!newcrush.name_exists(name.c_str())) {
 	err = -ENOENT;
 	ss << "device '" << name << "' does not appear in the crush map";
@@ -2452,7 +2452,7 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
 	break;
       }
       double w;
-      getval(cmdmap, "weight", w);
+      cmd_getval(g_ceph_context, cmdmap, "weight", w);
 
       err = newcrush.adjust_item_weightf(g_ceph_context, id, w);
       if (err == 0) {
@@ -2479,7 +2479,7 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
 
     err = 0;
     string profile;
-    getval(cmdmap, "profile", profile);
+    cmd_getval(g_ceph_context, cmdmap, "profile", profile);
     if (profile == "legacy" || profile == "argonaut") {
       newcrush.set_tunables_legacy();
     } else if (profile == "bobtail") {
@@ -2498,9 +2498,9 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
 
   } else if (prefix == "osd crush rule create-simple") {
     string name, root, type;
-    getval(cmdmap, "name", name);
-    getval(cmdmap, "root", root);
-    getval(cmdmap, "type", type);
+    cmd_getval(g_ceph_context, cmdmap, "name", name);
+    cmd_getval(g_ceph_context, cmdmap, "root", root);
+    cmd_getval(g_ceph_context, cmdmap, "type", type);
 
     if (osdmap.crush->rule_exists(name)) {
       ss << "rule " << name << " already exists";
@@ -2535,7 +2535,7 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
 
   } else if (prefix == "osd crush rule rm") {
     string name;
-    getval(cmdmap, "name", name);
+    cmd_getval(g_ceph_context, cmdmap, "name", name);
 
     if (!osdmap.crush->rule_exists(name)) {
       ss << "rule " << name << " does not exist";
@@ -2582,7 +2582,7 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
 
   } else if (prefix == "osd setmaxosd") {
     int64_t newmax;
-    getval(cmdmap, "newmax", newmax);
+    cmd_getval(g_ceph_context, cmdmap, "newmax", newmax);
 
     if (newmax > g_conf->mon_max_osd) {
       err = -ERANGE;
@@ -2605,7 +2605,7 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
 
   } else if (prefix == "osd set") {
     string key;
-    getval(cmdmap, "key", key);
+    cmd_getval(g_ceph_context, cmdmap, "key", key);
     if (key == "pause")
       return prepare_set_flag(m, CEPH_OSDMAP_PAUSERD | CEPH_OSDMAP_PAUSEWR);
     else if (key == "noup")
@@ -2623,7 +2623,7 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
 
   } else if (prefix == "osd unset") {
     string key;
-    getval(cmdmap, "key", key);
+    cmd_getval(g_ceph_context, cmdmap, "key", key);
     if (key == "pause")
       return prepare_unset_flag(m, CEPH_OSDMAP_PAUSERD | CEPH_OSDMAP_PAUSEWR);
     else if (key == "noup")
@@ -2653,7 +2653,7 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
     // can't do array in map yet
     string ids;
     vector<string> idvec;
-    getval(cmdmap, "ids", idvec);
+    cmd_getval(g_ceph_context, cmdmap, "ids", idvec);
     for (unsigned j = 0; j < idvec.size(); j++) {
       long osd = parse_osd_id(idvec[j].c_str(), &ss);
       if (osd < 0) {
@@ -2711,9 +2711,9 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
     }
   } else if (prefix == "osd reweight") {
     int64_t id;
-    getval(cmdmap, "id", id);
+    cmd_getval(g_ceph_context, cmdmap, "id", id);
     double w;
-    getval(cmdmap, "weight", w);
+    cmd_getval(g_ceph_context, cmdmap, "weight", w);
     long ww = (int)((double)CEPH_OSD_IN*w);
     if (ww < 0L) {
       ss << "weight must be > 0";
@@ -2730,9 +2730,9 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
 
   } else if (prefix == "osd lost") {
     int64_t id;
-    getval(cmdmap, "id", id);
+    cmd_getval(g_ceph_context, cmdmap, "id", id);
     string sure;
-    if (!getval(cmdmap, "sure", sure) || sure != "--yes-i-really-mean-it") {
+    if (!cmd_getval(g_ceph_context, cmdmap, "sure", sure) || sure != "--yes-i-really-mean-it") {
       ss << "are you SURE?  this might mean real, permanent data loss.  pass "
 	    "--yes-i-really-mean-it if you really do.";
     } else if (!osdmap.exists(id) || !osdmap.is_down(id)) {
@@ -2752,7 +2752,7 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
     // optional uuid provided?
     uuid_d uuid;
     string uuidstr;
-    if (getval(cmdmap, "uuid", uuidstr)) {
+    if (cmd_getval(g_ceph_context, cmdmap, "uuid", uuidstr)) {
       if (!uuid.parse(uuidstr.c_str())) {
 	err = -EINVAL;
 	goto out;
@@ -2802,18 +2802,18 @@ done:
 
   } else if (prefix == "osd blacklist") {
     string addrstr;
-    getval(cmdmap, "addr", addrstr);
+    cmd_getval(g_ceph_context, cmdmap, "addr", addrstr);
     entity_addr_t addr;
     if (!addr.parse(addrstr.c_str(), 0))
       ss << "unable to parse address " << addrstr;
     else {
       string blacklistop;
-      getval(cmdmap, "blacklistop", blacklistop);
+      cmd_getval(g_ceph_context, cmdmap, "blacklistop", blacklistop);
       if (blacklistop == "add") {
 	utime_t expires = ceph_clock_now(g_ceph_context);
 	double d;
 	// default one hour
-	getval(cmdmap, "expire", d, double(60*60));
+	cmd_getval(g_ceph_context, cmdmap, "expire", d, double(60*60));
 	expires += d;
 
 	pending_inc.new_blacklist[addr] = expires;
@@ -2841,7 +2841,7 @@ done:
 
   } else if (prefix == "osd pool mksnap") {
     string poolstr;
-    getval(cmdmap, "pool", poolstr);
+    cmd_getval(g_ceph_context, cmdmap, "pool", poolstr);
     int64_t pool = osdmap.lookup_pg_pool_name(poolstr.c_str());
     if (pool < 0) {
       ss << "unrecognized pool '" << poolstr << "'";
@@ -2852,7 +2852,7 @@ done:
       if (pending_inc.new_pools.count(pool))
 	pp = &pending_inc.new_pools[pool];
       string snapname;
-      getval(cmdmap, "snap", snapname);
+      cmd_getval(g_ceph_context, cmdmap, "snap", snapname);
       if (p->snap_exists(snapname.c_str()) ||
 	  (pp && pp->snap_exists(snapname.c_str()))) {
 	ss << "pool " << poolstr << " snap " << snapname << " already exists";
@@ -2872,7 +2872,7 @@ done:
     }
   } else if (prefix == "osd pool rmsnap") {
     string poolstr;
-    getval(cmdmap, "pool", poolstr);
+    cmd_getval(g_ceph_context, cmdmap, "pool", poolstr);
     int64_t pool = osdmap.lookup_pg_pool_name(poolstr.c_str());
     if (pool < 0) {
       ss << "unrecognized pool '" << poolstr << "'";
@@ -2883,7 +2883,7 @@ done:
       if (pending_inc.new_pools.count(pool))
 	pp = &pending_inc.new_pools[pool];
       string snapname;
-      getval(cmdmap, "snap", snapname);
+      cmd_getval(g_ceph_context, cmdmap, "snap", snapname);
       if (!p->snap_exists(snapname.c_str()) &&
 	  (!pp || !pp->snap_exists(snapname.c_str()))) {
 	ss << "pool " << poolstr << " snap " << snapname << " does not exists";
@@ -2906,7 +2906,7 @@ done:
   } else if (prefix == "osd pool create") {
     int pg_num;
     int pgp_num;
-    getval(cmdmap, "pg_num", pg_num, 0);
+    cmd_getval(g_ceph_context, cmdmap, "pg_num", pg_num, 0);
     if ((pg_num == 0) || (pg_num > g_conf->mon_max_pool_pg_num)) {
       ss << "'pg_num' must be greater than 0 and less than or equal to "
 	 << g_conf->mon_max_pool_pg_num
@@ -2915,7 +2915,7 @@ done:
       goto out;
     }
 
-    getval(cmdmap, "pgp_num", pgp_num, pg_num);
+    cmd_getval(g_ceph_context, cmdmap, "pgp_num", pgp_num, pg_num);
     if ((pgp_num == 0) || (pgp_num > pg_num)) {
       ss << "'pgp_num' must be greater than 0 and lower or equal than 'pg_num'"
 	 << ", which in this case is " << pg_num;
@@ -2924,7 +2924,7 @@ done:
     }
 
     string poolstr;
-    getval(cmdmap, "pool", poolstr);
+    cmd_getval(g_ceph_context, cmdmap, "pool", poolstr);
     if (osdmap.name_pool.count(poolstr)) {
       ss << "pool '" << poolstr << "' already exists";
       err = 0;
@@ -2949,9 +2949,9 @@ done:
   } else if (prefix == "osd pool delete") {
     // osd pool delete <poolname> <poolname again> --yes-i-really-really-mean-it
     string poolstr, poolstr2, sure;
-    getval(cmdmap, "pool", poolstr);
-    getval(cmdmap, "pool2", poolstr2);
-    getval(cmdmap, "sure", sure);
+    cmd_getval(g_ceph_context, cmdmap, "pool", poolstr);
+    cmd_getval(g_ceph_context, cmdmap, "pool2", poolstr2);
+    cmd_getval(g_ceph_context, cmdmap, "sure", sure);
     int64_t pool = osdmap.lookup_pg_pool_name(poolstr.c_str());
     if (pool < 0) {
       ss << "pool '" << poolstr << "' does not exist";
@@ -2974,8 +2974,8 @@ done:
     return true;
   } else if (prefix == "osd pool rename") {
     string srcpoolstr, destpoolstr;
-    getval(cmdmap, "srcpool", srcpoolstr);
-    getval(cmdmap, "destpool", destpoolstr);
+    cmd_getval(g_ceph_context, cmdmap, "srcpool", srcpoolstr);
+    cmd_getval(g_ceph_context, cmdmap, "destpool", destpoolstr);
     int64_t pool = osdmap.lookup_pg_pool_name(srcpoolstr.c_str());
     if (pool < 0) {
       ss << "unrecognized pool '" << srcpoolstr << "'";
@@ -2998,7 +2998,7 @@ done:
   } else if (prefix == "osd pool set") {
     // set a pool variable to a positive int
     string poolstr;
-    getval(cmdmap, "pool", poolstr);
+    cmd_getval(g_ceph_context, cmdmap, "pool", poolstr);
     int64_t pool = osdmap.lookup_pg_pool_name(poolstr.c_str());
     if (pool < 0) {
       ss << "unrecognized pool '" << poolstr << "'";
@@ -3006,9 +3006,9 @@ done:
     } else {
       const pg_pool_t *p = osdmap.get_pg_pool(pool);
       int64_t n;
-      getval(cmdmap, "val", n);
+      cmd_getval(g_ceph_context, cmdmap, "val", n);
       string var;
-      getval(cmdmap, "var", var);
+      cmd_getval(g_ceph_context, cmdmap, "var", var);
       if (pending_inc.new_pools.count(pool) == 0)
 	pending_inc.new_pools[pool] = *p;
       if (var == "size") {
@@ -3029,7 +3029,7 @@ done:
 	ss << "set pool " << pool << " to crash_replay_interval to " << n;
       } else if (var == "pg_num") {
 	string surestr;
-	if (!getval(cmdmap, "sure", surestr) ||
+	if (!cmd_getval(g_ceph_context, cmdmap, "sure", surestr) ||
 	    surestr != "--allow-experimental-feature") {
 	  ss << "increasing pg_num is currently experimental, add "
 	     << "--allow-experimental-feature as the last argument "
@@ -3070,7 +3070,7 @@ done:
 
   } else if (prefix == "osd pool get") {
     string poolstr;
-    getval(cmdmap, "pool", poolstr);
+    cmd_getval(g_ceph_context, cmdmap, "pool", poolstr);
     int64_t pool = osdmap.lookup_pg_pool_name(poolstr.c_str());
     if (pool < 0) {
       ss << "unrecognized pool '" << poolstr << "'";
@@ -3080,7 +3080,7 @@ done:
 
     const pg_pool_t *p = osdmap.get_pg_pool(pool);
     string var;
-    getval(cmdmap, "var", var);
+    cmd_getval(g_ceph_context, cmdmap, "var", var);
     if (var == "pg_num") {
       ss << "pg_num: " << p->get_pg_num();
     }
@@ -3104,7 +3104,7 @@ done:
 
   } else if (prefix == "osd reweight-by-utilization") {
     int64_t oload;
-    getval(cmdmap, "oload", oload, int64_t(120));
+    cmd_getval(g_ceph_context, cmdmap, "oload", oload, int64_t(120));
     string out_str;
     err = reweight_by_utilization(oload, out_str);
     if (err < 0) {
@@ -3121,7 +3121,7 @@ done:
 
   } else if (prefix == "osd thrash") {
     int64_t num_epochs;
-    getval(cmdmap, "num_epochs", num_epochs, int64_t(0));
+    cmd_getval(g_ceph_context, cmdmap, "num_epochs", num_epochs, int64_t(0));
     // thrash_map is a member var
     thrash_map = num_epochs;
     ss << "will thrash map for " << thrash_map << " epochs";

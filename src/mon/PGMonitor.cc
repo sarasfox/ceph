@@ -1077,7 +1077,7 @@ bool PGMonitor::preprocess_command(MMonCommand *m)
   }
 
   string prefix;
-  getval(cmdmap, "prefix", prefix);
+  cmd_getval(g_ceph_context, cmdmap, "prefix", prefix);
   vector<string> prefix_vec;
   get_str_vec(prefix, prefix_vec);
 
@@ -1111,13 +1111,13 @@ bool PGMonitor::preprocess_command(MMonCommand *m)
     r = 0;
     // perhaps these would be better in the parsing, but it's weird
     if (prefix == "pg dump_json") {
-      putval(cmdmap, "format", string("json"));
-      putval(cmdmap, "dumpcontents", string("all"));
+      cmd_putval(g_ceph_context, cmdmap, "format", string("json"));
+      cmd_putval(g_ceph_context, cmdmap, "dumpcontents", string("all"));
     } else if (prefix == "dump_pools_json") {
-      putval(cmdmap, "format", string("json"));
-      putval(cmdmap, "dumpcontents", string("pool"));
+      cmd_putval(g_ceph_context, cmdmap, "format", string("json"));
+      cmd_putval(g_ceph_context, cmdmap, "dumpcontents", string("pool"));
     }
-    getval(cmdmap, "format", format, string("json"));
+    cmd_getval(g_ceph_context, cmdmap, "format", format, string("json"));
     if (format == "json")
       f = new JSONFormatter(true);
     else if (format == "xml")
@@ -1127,7 +1127,7 @@ bool PGMonitor::preprocess_command(MMonCommand *m)
     stringstream ds;
     if (f) {
       vector<string> dumpcontents;
-      getval(cmdmap, "dumpcontents", dumpcontents);
+      cmd_getval(g_ceph_context, cmdmap, "dumpcontents", dumpcontents);
       set<string>what(dumpcontents.begin(), dumpcontents.end());
       if (what.empty())
 	what.insert("all");
@@ -1162,8 +1162,8 @@ bool PGMonitor::preprocess_command(MMonCommand *m)
   } else if (prefix == "pg dump_stuck") {
     vector<string> stuckop_vec;
     string format;
-    getval(cmdmap, "stuckops", stuckop_vec);
-    getval(cmdmap, "format", format, string("plain"));
+    cmd_getval(g_ceph_context, cmdmap, "stuckops", stuckop_vec);
+    cmd_getval(g_ceph_context, cmdmap, "format", format, string("plain"));
     if (stuckop_vec.empty())
       stuckop_vec.push_back("unclean");
     r = dump_stuck_pg_stats(ss, rdata, format, stuckop_vec);
@@ -1171,7 +1171,7 @@ bool PGMonitor::preprocess_command(MMonCommand *m)
     pg_t pgid;
     r = -EINVAL;
     string pgidstr;
-    getval(cmdmap, "pgid", pgidstr);
+    cmd_getval(g_ceph_context, cmdmap, "pgid", pgidstr);
     if (pgid.parse(pgidstr.c_str())) {
       vector<int> up, acting;
       if (mon->osdmon()->osdmap.have_pg_pool(pgid.pool())) {
@@ -1195,7 +1195,7 @@ bool PGMonitor::preprocess_command(MMonCommand *m)
     pg_t pgid;
     r = -EINVAL;
     string pgidstr;
-    getval(cmdmap, "pgid", pgidstr);
+    cmd_getval(g_ceph_context, cmdmap, "pgid", pgidstr);
     if (pgid.parse(pgidstr.c_str())) {
       if (pg_map.pg_stat.count(pgid)) {
 	if (pg_map.pg_stat[pgid].acting.size()) {
@@ -1219,7 +1219,7 @@ bool PGMonitor::preprocess_command(MMonCommand *m)
       ss << "invalid pgid '" << pgidstr << "'";
   } else if (prefix == "pg debug") {
     string debugop;
-    getval(cmdmap, "debugop", debugop, string("unfound_objects_exist"));
+    cmd_getval(g_ceph_context, cmdmap, "debugop", debugop, string("unfound_objects_exist"));
     if (debugop == "unfound_objects_exist") {
       bool unfound_objects_exist = false;
       hash_map<pg_t,pg_stat_t>::const_iterator end = pg_map.pg_stat.end();
@@ -1280,7 +1280,7 @@ bool PGMonitor::prepare_command(MMonCommand *m)
   }
 
   string prefix;
-  getval(cmdmap, "prefix", prefix);
+  cmd_getval(g_ceph_context, cmdmap, "prefix", prefix);
 
   vector<string> prefix_vec;
   get_str_vec(prefix, prefix_vec);
@@ -1295,7 +1295,7 @@ bool PGMonitor::prepare_command(MMonCommand *m)
 
   if (prefix == "pg force_create_pg") {
     string pgidstr;
-    getval(cmdmap, "pgid", pgidstr);
+    cmd_getval(g_ceph_context, cmdmap, "pgid", pgidstr);
     if (!pgid.parse(pgidstr.c_str())) {
       ss << "pg " << pgidstr << " invalid";
       goto out;
@@ -1320,7 +1320,7 @@ bool PGMonitor::prepare_command(MMonCommand *m)
   } else if (prefix == "pg set_full_ratio" || 
 	     prefix == "pg set_nearfull_ratio") {
     double n;
-    getval(cmdmap, "ratio", n);
+    cmd_getval(g_ceph_context, cmdmap, "ratio", n);
     string op = prefix.substr(3, string::npos);
     if (op == "set_full_ratio")
       pending_inc.full_ratio = n;

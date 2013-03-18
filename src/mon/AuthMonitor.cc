@@ -517,7 +517,7 @@ bool AuthMonitor::preprocess_command(MMonCommand *m)
   }
 
   string prefix;
-  getval(cmdmap, "prefix", prefix);
+  cmd_getval(g_ceph_context, cmdmap, "prefix", prefix);
   if (prefix == "auth add" ||
       prefix == "auth del" ||
       prefix == "auth get-or-create" ||
@@ -538,7 +538,7 @@ bool AuthMonitor::preprocess_command(MMonCommand *m)
 
   // entity might not be supplied, but if it is, it should be valid
   string entity_name;
-  getval(cmdmap, "entity", entity_name);
+  cmd_getval(g_ceph_context, cmdmap, "entity", entity_name);
   EntityName entity;
   if (!entity_name.empty() && !entity.from_str(entity_name)) {
     ss << "invalid entity_auth " << entity_name;
@@ -644,7 +644,7 @@ bool AuthMonitor::prepare_command(MMonCommand *m)
   string entity_name;
   EntityName entity;
 
-  getval(cmdmap, "prefix", prefix);
+  cmd_getval(g_ceph_context, cmdmap, "prefix", prefix);
 
   vector<string> prefix_vec;
   get_str_vec(prefix, prefix_vec);
@@ -656,14 +656,14 @@ bool AuthMonitor::prepare_command(MMonCommand *m)
     return true;
   }
 
-  getval(cmdmap, "caps", caps_vec);
+  cmd_getval(g_ceph_context, cmdmap, "caps", caps_vec);
   if ((caps_vec.size() % 2) != 0) {
     ss << "bad capabilities request; odd number of arguments";
     err = -EINVAL;
     goto done;
   }
 
-  getval(cmdmap, "entity", entity_name);
+  cmd_getval(g_ceph_context, cmdmap, "entity", entity_name);
   if (!entity_name.empty() && !entity.from_str(entity_name)) {
     ss << "bad entity name";
     err = -EINVAL;

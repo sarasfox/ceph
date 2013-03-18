@@ -6,6 +6,7 @@
 #include <boost/variant.hpp>
 #include <vector>
 #include <stdexcept>
+#include "common/dout.h"
 
 typedef boost::variant<std::string, bool, int64_t, double, std::vector<std::string> > cmd_vartype;
 
@@ -13,7 +14,7 @@ bool cmdmap_from_json(std::vector<std::string> cmd, std::map<std::string, cmd_va
 
 template <typename T>
 bool
-getval(std::map<std::string, cmd_vartype>& cmdmap, std::string k, T& val)
+cmd_getval(CephContext *cct, std::map<std::string, cmd_vartype>& cmdmap, std::string k, T& val)
 {
   // referencing a nonexistent key creates it, even as an rvalue;
   // we don't want that behavior for get.
@@ -22,10 +23,9 @@ getval(std::map<std::string, cmd_vartype>& cmdmap, std::string k, T& val)
       val = boost::get<T>(cmdmap[k]);
       return true;
     } catch (boost::bad_get) { 
-      // XXX this needs to be something different...clog, perhaps
       std::ostringstream errstr;
       errstr << "bad boost::get: key " << k << "is not type" << typeid(T).name();
-      throw std::runtime_error(errstr.str());
+      lderr(cct) << errstr << dendl;
     }
   }
   // either not found or bad type, return false
@@ -35,16 +35,16 @@ getval(std::map<std::string, cmd_vartype>& cmdmap, std::string k, T& val)
 // with default
 template <typename T>
 void
-getval(std::map<std::string, cmd_vartype>& cmdmap, std::string k, T& val,
+cmd_getval(CephContext *cct, std::map<std::string, cmd_vartype>& cmdmap, std::string k, T& val,
        T defval)
 {
-  if (!getval(cmdmap, k, val))
+  if (!cmd_getval(cct, cmdmap, k, val))
     val = defval;
 }
 
 template <typename T>
 void
-putval(std::map<std::string, cmd_vartype>& cmdmap, std::string k, T val)
+cmd_putval(CephContext *cct, std::map<std::string, cmd_vartype>& cmdmap, std::string k, T val)
 {
   cmdmap[k] = val;
 }
