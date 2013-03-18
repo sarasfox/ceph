@@ -2466,8 +2466,7 @@ void Monitor::handle_command(MMonCommand *m)
     reply_command(m, 0, "", rdata, 0);
   }
 
-  // this doesn't work well if m->cmd is JSON; redone below if so
-  bool access_cmd = _allowed_command(session, m->cmd);
+  bool access_cmd;
   bool access_r;
   bool access_all;
 
@@ -2485,45 +2484,37 @@ void Monitor::handle_command(MMonCommand *m)
   if (m->cmd.empty())
     goto out;
 
-#if 0
   if (!cmdmap_from_json(m->cmd, &cmdmap, ss)) {
     // ss has reason for failure
     r = -EINVAL;
     string rs = ss.str();
     goto out;
   }
-#else
-  // XXX allow failure for now
-  if (cmdmap_from_json(m->cmd, &cmdmap, ss)) {
-    getval(cmdmap, "prefix", prefix);
-    module = prefix.substr(0, prefix.find(' '));
-    vector<string> prefix_vec;
-    get_str_vec(prefix, prefix_vec);
-    access_cmd = _allowed_command(session, prefix_vec);
-  } else {
-    // ignore error
-    ss.str("");
-  }
-#endif
+
+  getval(cmdmap, "prefix", prefix);
+  vector<string> prefix_vec;
+  get_str_vec(prefix, prefix_vec);
+  module = prefix_vec[0];
+  access_cmd = _allowed_command(session, prefix_vec);
 
   access_r = (session->caps.check_privileges(PAXOS_MONMAP, MON_CAP_R) ||
 		   access_cmd);
   access_all = (session->caps.get_allow_all() || access_cmd);
 
-  if (module == "mds" || m->cmd[0] == "mds") {
+  if (module == "mds") {
     mdsmon()->dispatch(m);
     return;
   }
-  if (module == "osd" || m->cmd[0] == "osd") {
+  if (module == "osd") {
     osdmon()->dispatch(m);
     return;
   }
 
-  if (module == "pg" || m->cmd[0] == "pg") {
+  if (module == "pg") {
     pgmon()->dispatch(m);
     return;
   }
-  if (module == "mon" || m->cmd[0] == "mon") {
+  if (module == "mon") {
     monmon()->dispatch(m);
     return;
   }
@@ -2531,7 +2522,7 @@ void Monitor::handle_command(MMonCommand *m)
     reply_command(m, -EINVAL, "class distribution is no longer handled by the monitor", 0);
     return;
   }
-  if (module == "auth" || m->cmd[0] == "auth") {
+  if (module == "auth") {
     authmon()->dispatch(m);
     return;
   }
@@ -2764,7 +2755,7 @@ void Monitor::handle_command(MMonCommand *m)
       string heapcmd;
       getval(cmdmap, "heapcmd", heapcmd);
       ostringstream ss;
-      // XXX vector, change at callee or make vector here?
+      // XXX 1-element vector, change at callee or make vector here?
       vector<string> heapcmd_vec;
       get_str_vec(heapcmd, heapcmd_vec);
       ceph_heap_profiler_handle_command(heapcmd_vec, ss);
