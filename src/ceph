@@ -84,7 +84,7 @@ class CephArgtype(object):
         """
         a = ''
         if hasattr(self, 'typeargs'):
-            a = self.typeargs;
+            a = self.typeargs
         return '{}(\'{}\')'.format(self.__class__.__name__, a)
 
     def __str__(self):
@@ -555,12 +555,12 @@ def parse_json_funcsig(s):
         raise e
     sigdict = {}
     for cmdtag, sigandhelp in overall.iteritems():
-        helptext = sigandhelp.get('help', 'no help available');
+        helptext = sigandhelp.get('help', 'no help available')
         try:
             sig = sigandhelp['sig']
         except KeyError:
             s = "JSON descriptor {} has no 'sig'".format(cmdtag)
-            raise JsonFormat(s);
+            raise JsonFormat(s)
 
         newsig = []
         argnum = 0
