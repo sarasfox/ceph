@@ -2524,10 +2524,6 @@ void Monitor::handle_command(MMonCommand *m)
     monmon()->dispatch(m);
     return;
   }
-  if (m->cmd[0] == "class") {
-    reply_command(m, -EINVAL, "class distribution is no longer handled by the monitor", 0);
-    return;
-  }
   if (module == "auth") {
     authmon()->dispatch(m);
     return;
