@@ -11,6 +11,8 @@ import subprocess
 import socket
 import uuid
 import argparse
+import select
+import fcntl
 
 """
 Something wrong with arguments
@@ -702,20 +704,15 @@ def parse_cmdargs(usage=''):
                         help='submit admin-socket commands (\"help\" for help')
     parser.add_argument('-s', '--status', action='store_true', help='show cluster status')
     parser.add_argument('-w', '--watch', action='store_true', help='watch live cluster changes')
-    parser.add_argument('--watch-debug', dest='watch_level', 
-                        action='store_const', const='log-debug',
+    parser.add_argument('--watch-debug', action='store_true',
                         help='watch debug events')
-    parser.add_argument('--watch-info', dest='watch_level',
-                        action='store_const', const='log-info',
+    parser.add_argument('--watch-info', action='store_true',
                         help='watch info events')
-    parser.add_argument('--watch-sec', dest='watch_level',
-                        action='store_const', const='log-sec',
+    parser.add_argument('--watch-sec', action='store_true',
                         help='watch sec events')
-    parser.add_argument('--watch-warn', dest='watch_level',
-                        action='store_const', const='log-warn',
+    parser.add_argument('--watch-warn', action='store_true',
                         help='watch warn events')
-    parser.add_argument('--watch-error', dest='watch_level',
-                        action='store_const', const='log-error',
+    parser.add_argument('--watch-error', action='store_true',
                         help='watch error events')
     parser.add_argument('-v', '--verbose', action="store_true")
     parser.add_argument('--concise')
@@ -732,17 +729,38 @@ def get_process_output(args):
         sys.exit(1)
     return outdata
 
-def do_command(command, d, verbose=False):
+def do_command(command, d, verbose=False, endless=False):
+
+    def make_nonblocking(filelist):
+        for f in filelist:
+            flags = fcntl.fcntl(f, fcntl.F_GETFL)
+            fcntl.fcntl(f, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
     command.append(json.dumps(d))
     if verbose:
         print >> sys.stderr, "invoking ", command
     p = subprocess.Popen(command, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
-    outdata, errdata = p.communicate()
-    if len(errdata):
-        print >> sys.stderr, errdata
-    print outdata
+    if endless:
+        try:
+            make_nonblocking([p.stdout, p.stderr])
+            fdlist = [p.stdout.fileno(), p.stderr.fileno()]
+            while not p.poll():
+                (r, _, e) = select.select(fdlist, [], fdlist, 1)
+                if (p.stdout.fileno() in r):
+                    print p.stdout.read()
+                if (p.stderr.fileno() in r):
+                    print >> sys.stderr, p.stderr.read()
+                if e:
+                    print >> sys.stderr, "error on process stdout/stderr"
+        except KeyboardInterrupt:
+            pass
+
+    else:
+        outdata, errdata = p.communicate()
+        if len(errdata):
+            print >> sys.stderr, errdata
+        print outdata
     return p.returncode
 
 def main():
@@ -775,14 +793,24 @@ def main():
             sig = sigandhelp['sig']
             print '{}: {}'.format(cmdtag, concise_sig(sig))
 
+    # special commands: '-s' is its own command
     got_command = False
+    endless = False
     if parsed_args.status:
         command.append('-s')
         got_command = True
-    if parsed_args.watch:
-        command.append('-w')
-        got_command = True
 
+    # -w/--watch* are also their own endless monitoring commands
+
+    # this is ugly, but Namespace() isn't quite rich enough
+    for k,v in parsed_args._get_kwargs():
+        if k.startswith('watch') and v:
+            arg = '--' + k.replace('_', '-')
+            command.append(arg)
+            endless = True;
+            got_command = True
+
+    # just pass on -i, -o, -k
     if parsed_args.input_file:
         command.extend(['-i', parsed_args.input_file])
     if parsed_args.output_file:
@@ -852,7 +880,7 @@ def main():
 
     if parsed_args.output_format:
         valid_dict['format'] = parsed_args.output_format
-    sys.exit(do_command(command, valid_dict, verbose))
+    sys.exit(do_command(command, valid_dict, verbose, endless))
 
 ###
 # main
