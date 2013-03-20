@@ -9,7 +9,7 @@ COMMAND("pg dump type=CephChoices,strings=all|summary|sum|pools|osds|pgs,n=N,nam
 COMMAND("pg dump_json type=CephChoices,strings=all|summary|sum|pools|osds|pgs,n=N,name=dumpcontents", "dump_json help")
 COMMAND("pg dump_pools_json", "dump_pools_json help")
 COMMAND("pg dump_stuck type=CephChoices,strings=inactive|unclean|stale,n=N,name=stuckops", "dump_stuck help")
-COMMAND("pg map type=CephPgid,name=pgid", "pg <pgid> help")
+COMMAND("pg map type=CephPgid,name=pgid", "pg map <pgid> help")
 COMMAND("pg scrub type=CephPgid,name=pgid", "pg scrub help")
 COMMAND("pg deep-scrub type=CephPgid,name=pgid", "pg deep-scrub help")
 COMMAND("pg repair type=CephPgid,name=pgid", "pg repair help")
