@@ -96,6 +96,7 @@ COMMAND("mon remove type=CephString,name=name", "remove monitor named <name>")
  * OSD commands
  */
 COMMAND("osd stat", "print summary of OSD map")
+COMMAND("osd dump", "print summary of OSD map")
 COMMAND("osd tree type=CephInt,range=0,name=epoch,req=false", "print OSD tree")
 COMMAND("osd ls type=CephInt,range=0,name=epoch", "show all OSD ids")
 COMMAND("osd getmap type=CephInt,range=0,name=epoch,req=false", "get OSD map")
