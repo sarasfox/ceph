@@ -1803,7 +1803,7 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
 
     epoch_t epoch = 0;
     int64_t epochnum;
-    cmd_getval(g_ceph_context, cmdmap, "epoch", epochnum);
+    cmd_getval(g_ceph_context, cmdmap, "epoch", epochnum, (int64_t)0);
     epoch = epochnum;
 
     OSDMap *p = &osdmap;
@@ -2904,9 +2904,9 @@ done:
     }
     
   } else if (prefix == "osd pool create") {
-    int pg_num;
-    int pgp_num;
-    cmd_getval(g_ceph_context, cmdmap, "pg_num", pg_num, 0);
+    int64_t  pg_num;
+    int64_t pgp_num;
+    cmd_getval(g_ceph_context, cmdmap, "pg_num", pg_num, int64_t(0));
     if ((pg_num == 0) || (pg_num > g_conf->mon_max_pool_pg_num)) {
       ss << "'pg_num' must be greater than 0 and less than or equal to "
 	 << g_conf->mon_max_pool_pg_num
