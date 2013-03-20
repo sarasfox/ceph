@@ -74,6 +74,14 @@ COMMAND("mds set_state type=CephInt,name=gid,range=0 type=CephInt,name=state,ran
 COMMAND("mds fail type=CephName,name=who", "force mds to status failed")
 COMMAND("mds rm type=CephInt,name=gid,range=0 type=CephName,name=who", "remove nonactive mds")
 COMMAND("mds rmfailed type=CephInt,range=0,name=who", "remove failed mds")
+COMMAND("mds cluster_down", "take MDS cluster down")
+COMMAND("mds cluster_up", "take MDS cluster down")
+COMMAND("mds compat rm_compat type=CephInt,name=feature,range=0 ", "remove compatible feature")
+COMMAND("mds compat rm_incompat type=CephInt,name=feature,range=0", "remove incompatible feature")
+COMMAND("mds add_data_pool type=CephInt,name=poolid,range=0", "add data pool <poolid>")
+COMMAND("mds remove_data_pool type=CephInt,name=poolid,range=0", "remove data pool <poolid>")
+COMMAND("mds newfs type=CephInt,name=metadata,range=0 type=CephInt,name=data,range=0 type=CephChoices,strings=--yes-i-really-mean-it,name=sure", "make new filesystom using pools <metadata> and <data>")
+
 
 /*
  * Monmap commands
