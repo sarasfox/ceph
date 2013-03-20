@@ -24,8 +24,8 @@ cmd_getval(CephContext *cct, std::map<std::string, cmd_vartype>& cmdmap, std::st
       return true;
     } catch (boost::bad_get) { 
       std::ostringstream errstr;
-      errstr << "bad boost::get: key " << k << "is not type" << typeid(T).name();
-      lderr(cct) << errstr << dendl;
+      errstr << "bad boost::get: key " << k << " is not type " << typeid(T).name();
+      lderr(cct) << errstr.str() << dendl;
     }
   }
   // either not found or bad type, return false
