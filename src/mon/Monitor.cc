@@ -2488,7 +2488,13 @@ void Monitor::handle_command(MMonCommand *m)
   if (!cmdmap_from_json(m->cmd, &cmdmap, ss)) {
     // ss has reason for failure
     r = -EINVAL;
-    string rs = ss.str();
+    rs = ss.str();
+    goto out;
+  }
+
+  if (cmdmap.empty()) {
+    r = -EINVAL;
+    rs = "JSON contained no command";
     goto out;
   }
 
