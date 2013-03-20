@@ -2299,7 +2299,7 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
       cmd_getval(g_ceph_context, cmdmap, "id", id);
       if (!osdmap.exists(id)) {
 	err = -ENOENT;
-	ss << "osd." << m->cmd[3] << " does not exist.  create it before updating the crush map";
+	ss << "osd." << id << " does not exist.  create it before updating the crush map";
 	goto out;
       }
 
@@ -2491,7 +2491,7 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
     } 
     pending_inc.crush.clear();
     newcrush.encode(pending_inc.crush);
-    ss << "adjusted tunables profile to " << m->cmd[3];
+    ss << "adjusted tunables profile to " << profile;
     getline(ss, rs);
     wait_for_finished_proposal(new Monitor::C_Command(mon, m, 0, rs, get_version()));
     return true;
@@ -2650,8 +2650,7 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
 	     prefix == "osd rm") {
 
     bool any = false;
-    // can't do array in map yet
-    string ids;
+
     vector<string> idvec;
     cmd_getval(g_ceph_context, cmdmap, "ids", idvec);
     for (unsigned j = 0; j < idvec.size(); j++) {
