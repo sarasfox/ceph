@@ -145,13 +145,10 @@ COMMAND("osd pool mksnap type=CephPoolname,name=pool type=CephString,name=snap",
 COMMAND("osd pool create type=CephPoolname,name=pool type=CephInt,name=pg_num,range=0 type=CephInt,name=pgp_num,range=0,req=false", "create pool")
 COMMAND("osd pool delete type=CephPoolname,name=pool type=CephPoolname,name=pool2 type=CephChoices,name=sure,strings=--yes-i-really-really-mean-it", "delete pool (say pool twice, add --yes-i-really-really-mean-it")
 COMMAND("osd pool rename type=CephPoolname,name=srcpool type=CephPoolname,name=destpool", "rename <srcpool> to <destpool>")
-COMMAND("osd pool get type=CephPoolname,name=pool type=CephChoices,name=var,strings=size|min_size|crash_replay_interval|pg_num|pgp_num|crush_ruleset type=CephInt,name=val,range=0", "set pool parameter <var> to <val>")
-COMMAND("osd pool set type=CephPoolname,name=pool type=CephChoices,name=var,strings=size|min_size|crash_replay_interval|pg_num|pgp_num|crush_ruleset type=CephChoices,name=sure,strings=--allow-experimental-feature,req=false", "get pool parameter <var>")
 COMMAND("osd pool get type=CephPoolname,name=pool type=CephChoices,name=var,strings=size|min_size|crash_replay_interval|pg_num|pgp_num|crush_ruleset", "get pool parameter <var>")
+COMMAND("osd pool set type=CephPoolname,name=pool type=CephChoices,name=var,strings=size|min_size|crash_replay_interval|pg_num|pgp_num|crush_ruleset type=CephChoices,name=sure,strings=--allow-experimental-feature,req=false", "set pool parameter <var> to <val>")
 COMMAND("osd reweight-by-utilization type=CephInt,name=oload,range=0,req=false", "reweight OSDs by utilization <oload XXX>")
 COMMAND("osd thrash type=CephInt,name=num_epochs,range=0", "thrash OSDs for <num_epochs>")
-
-
 
 
 
