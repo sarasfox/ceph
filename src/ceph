@@ -818,6 +818,9 @@ def main():
     if parsed_args.keyring_file:
         command.extend(['-k', parsed_args.keyring_file])
 
+    if parsed_args.admin_socket:
+        command.extend(['--admin-daemon', parsed_args.admin_socket] + childargs)
+        got_command = True
 
     # validate input args against list of sigs
 
