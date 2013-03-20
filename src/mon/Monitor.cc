@@ -2627,6 +2627,8 @@ void Monitor::handle_command(MMonCommand *m)
       } else {
         ss << health_str;
       }
+      rs = ss.str();
+      r = 0;
     } else if (prefix == "df") {
       bool verbose = (detail == "detail");
       if (jf)
