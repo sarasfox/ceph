@@ -248,7 +248,7 @@ class CephIPAddr(CephArgtype):
         return '<IPaddr[:port]>' 
 
 class CephEntityAddr(CephIPAddr):
-    def valid(self,s):
+    def valid(self, s, partial=False):
         ip, nonce = s.split('/')
         if not super(CephIPAddr, self).valid(self, ip):
             raise ArgumentValid('CephEntityAddr {}: ip address invalid'.format(s))
@@ -262,7 +262,7 @@ class CephEntityAddr(CephIPAddr):
 Pool name; checked for presence in cluster
 """
 class CephPoolname(CephArgtype):
-    def valid(self, s):
+    def valid(self, s, partial=False):
         # if cluster.pool.exists(s):
         #    raise ArgumentValid("pool {} does not exist".format(s))
         self.val = s
