@@ -893,8 +893,8 @@ bool MDSMonitor::prepare_command(MMonCommand *m)
     return true;
   } else if (prefix == "mds cluster_fail") {
     r = cluster_fail(ss);
-  }
-  else if (m->cmd[1] == "cluster_down") {
+
+  } else if (prefix == "mds cluster_down") {
     if (pending_mdsmap.test_flag(CEPH_MDSMAP_DOWN)) {
       ss << "mdsmap already marked DOWN";
       r = -EPERM;
@@ -903,8 +903,8 @@ bool MDSMonitor::prepare_command(MMonCommand *m)
       ss << "marked mdsmap DOWN";
       r = 0;
     }
-  }
-  else if (m->cmd[1] == "cluster_up") {
+
+  } else if (prefix == "mds cluster_up") {
     if (pending_mdsmap.test_flag(CEPH_MDSMAP_DOWN)) {
       pending_mdsmap.clear_flag(CEPH_MDSMAP_DOWN);
       ss << "unmarked mdsmap DOWN";
@@ -913,53 +913,52 @@ bool MDSMonitor::prepare_command(MMonCommand *m)
       ss << "mdsmap not marked DOWN";
       r = -EPERM;
     }
-  }
-  else if (m->cmd[1] == "compat" && m->cmd.size() == 4) {
-    int64_t f = parse_pos_long(m->cmd[3].c_str(), &ss);
-    if (f < 0)
-      goto out;
-    if (m->cmd[2] == "rm_compat") {
-      if (pending_mdsmap.compat.compat.contains(f)) {
-	ss << "removing compat feature " << f;
-	pending_mdsmap.compat.compat.remove(f);
-	r = 0;
-      } else {
-	ss << "compat feature " << f << " not present in " << pending_mdsmap.compat;
-	r = -ENOENT;
-      }
-    } else if (m->cmd[2] == "rm_incompat") {
-      if (pending_mdsmap.compat.incompat.contains(f)) {
-	ss << "removing incompat feature " << f;
-	pending_mdsmap.compat.incompat.remove(f);
-	r = 0;
-      } else {
-	ss << "incompat feature " << f << " not present in " << pending_mdsmap.compat;
-	r = -ENOENT;
-      }
+
+  } else if (prefix == "mds compat rm_compat") {
+    int64_t f;
+    cmd_getval(g_ceph_context, cmdmap, "feature", f);
+    if (pending_mdsmap.compat.compat.contains(f)) {
+      ss << "removing compat feature " << f;
+      pending_mdsmap.compat.compat.remove(f);
+      r = 0;
+    } else {
+      ss << "compat feature " << f << " not present in " << pending_mdsmap.compat;
+      r = -ENOENT;
     }
-  } else if (m->cmd[1] == "add_data_pool" && m->cmd.size() == 3) {
-    int64_t poolid = parse_pos_long(m->cmd[2].c_str(), &ss);
-    if (poolid < 0)
-      goto out;
+  } else if (prefix == "mds compat rm_incompat") {
+    int64_t f;
+    cmd_getval(g_ceph_context, cmdmap, "feature", f);
+    if (pending_mdsmap.compat.incompat.contains(f)) {
+      ss << "removing incompat feature " << f;
+      pending_mdsmap.compat.incompat.remove(f);
+      r = 0;
+    } else {
+      ss << "incompat feature " << f << " not present in " << pending_mdsmap.compat;
+      r = -ENOENT;
+    }
+
+  } else if (prefix == "mds add_data_pool") {
+    int64_t poolid;
+    cmd_getval(g_ceph_context, cmdmap, "poolid", poolid);
     pending_mdsmap.add_data_pool(poolid);
     ss << "added data pool " << poolid << " to mdsmap";
     r = 0;
-  } else if (m->cmd[1] == "remove_data_pool" && m->cmd.size() == 3) {
-    int64_t poolid = parse_pos_long(m->cmd[2].c_str(), &ss);
-    if (poolid < 0)
-      goto out;
+
+  } else if (prefix == "mds remove_data_pool") {
+    int64_t poolid;
+    cmd_getval(g_ceph_context, cmdmap, "poolid", poolid);
     r = pending_mdsmap.remove_data_pool(poolid);
     if (r == 0)
       ss << "removed data pool " << poolid << " from mdsmap";
-  } else if (m->cmd[1] == "newfs" && m->cmd.size() >= 4) {
+
+  } else if (prefix == "mds newfs") {
     MDSMap newmap;
-    long metadata = parse_pos_long(m->cmd[2].c_str(), &ss);
-    if (metadata < 0)
-      goto out;
-    long data = parse_pos_long(m->cmd[3].c_str());
-    if (data < 0)
-      goto out;
-    if (m->cmd.size() < 5 || m->cmd[4] != "--yes-i-really-mean-it") {
+    int64_t metadata, data;
+    cmd_getval(g_ceph_context, cmdmap, "metadata", metadata);
+    cmd_getval(g_ceph_context, cmdmap, "data", data);
+    string sure;
+    cmd_getval(g_ceph_context, cmdmap, "sure", sure);
+    if (sure != "--yes-i-really-mean-it") {
       ss << "this is DANGEROUS and will wipe out the mdsmap's fs, and may clobber data in the new pools you specify.  add --yes-i-really-mean-it if you do.";
       r = -EPERM;
     } else {
