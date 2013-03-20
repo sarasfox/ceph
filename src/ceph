@@ -135,14 +135,11 @@ range: list of 1 or 2 floats, [min] or [min, max]
 """
 class CephFloat(CephArgtype):
     def __init__(self, range=''):
-        if isinstance(range, types.StringType):
-            if range == '':
-                self.range = list()
-            else:
-                self.range = list(range.split('|'))
-                self.range = map(float, self.range)
+        if range == '':
+            self.range = list()
         else:
-            self.range = range
+            self.range = list(range.split('|'))
+            self.range = map(float, self.range)
 
     def valid(self, s, partial=False):
         try:
