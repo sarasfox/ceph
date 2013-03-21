@@ -340,7 +340,8 @@ class CephChoices(CephArgtype):
     def valid(self, s, partial=False):
         if not partial:
             if not s in self.strings:
-                raise ArgumentValid("{} not in {}".format(s, self.strings))
+                # show as __str__ does: {s1|s2..}
+                raise ArgumentValid("{} not in {}".format(s, self))
             self.val = s
             return True
 
@@ -349,7 +350,7 @@ class CephChoices(CephArgtype):
             if t.startswith(s):
                 self.val = s
                 return True
-        raise ArgumentValid("{} not in {}".format(s, self.strings))
+        raise ArgumentValid("{} not in {}".  format(s, self))
 
     def __str__(self):
         if len(self.strings) == 1:
@@ -864,8 +865,11 @@ def main():
                     # this is common, and we don't want to whine about it
                     pass
                 except ArgumentError as e:
-                    print >> sys.stderr, "almost {}: {}: {}\n{}". \
-                        format(cmdtag, concise_sig(sig), e, helptext)
+                    print >> sys.stderr, '{}: invalid command'.\
+                        format(' '.join(childargs))
+                    print >> sys.stderr, '{}'.format(e)
+                    print >> sys.stderr, "did you mean {}?\n\t{}".\
+                        format(concise_sig(sig), helptext)
                     pass
 
     # special case: combine prefix into a single string 
@@ -878,7 +882,6 @@ def main():
             valid_dict[key] = val[0]
 
     if not (found or got_command):
-        print >> sys.stderr, '{}: invalid command'.format(childargs)
         return 1
 
     if parsed_args.output_format:
