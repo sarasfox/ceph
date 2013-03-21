@@ -2,20 +2,20 @@
  * pg commands PgMonitor.cc
  */
 
-COMMAND("pg stat", "pg stat help")
-COMMAND("pg getmap", "pg getmap help")
-COMMAND("pg send_pg_creates", "send_pg_creates help")
-COMMAND("pg dump type=CephChoices,strings=all|summary|sum|pools|osds|pgs,n=N,name=dumpcontents", "dump help")
-COMMAND("pg dump_json type=CephChoices,strings=all|summary|sum|pools|osds|pgs,n=N,name=dumpcontents", "dump_json help")
-COMMAND("pg dump_pools_json", "dump_pools_json help")
-COMMAND("pg dump_stuck type=CephChoices,strings=inactive|unclean|stale,n=N,name=stuckops", "dump_stuck help")
-COMMAND("pg map type=CephPgid,name=pgid", "pg map <pgid> help")
-COMMAND("pg scrub type=CephPgid,name=pgid", "pg scrub help")
-COMMAND("pg deep-scrub type=CephPgid,name=pgid", "pg deep-scrub help")
-COMMAND("pg repair type=CephPgid,name=pgid", "pg repair help")
-COMMAND("pg debug type=CephChoices,strings=unfound_objects_exist|degraded_pgs_exist,name=debugop", "pg debug help")
-COMMAND("pg force_create_pg type=CephPgid,name=pgid", "pg force_create_pg help")
-COMMAND("pg set_full_ratio type=CephFloat,range=0.0|1.0,name=ratio", "pg set_full_ratio help")
+COMMAND("pg stat", "show placement group status.  This will be a really really long help message to show what happens when the help message is much longer than the command string itself.")
+COMMAND("pg getmap", "get binary pg map to -o/stdout")
+COMMAND("pg send_pg_creates", "trigger pg creates to be issued")
+COMMAND("pg dump type=CephChoices,strings=all|summary|sum|pools|osds|pgs,n=N,name=dumpcontents", "show human-readable versions of pg map")
+COMMAND("pg dump_json type=CephChoices,strings=all|summary|sum|pools|osds|pgs,n=N,name=dumpcontents", "show human-readable version of pg map in json only")
+COMMAND("pg dump_pools_json", "show pg pools info in json only")
+COMMAND("pg dump_stuck type=CephChoices,strings=inactive|unclean|stale,n=N,name=stuckops", "show information about stuck pgs")
+COMMAND("pg map type=CephPgid,name=pgid", "show mapping of pg to osds")
+COMMAND("pg scrub type=CephPgid,name=pgid", "start scrub on <pgid>")
+COMMAND("pg deep-scrub type=CephPgid,name=pgid", "start deep-scrub on <pgid>")
+COMMAND("pg repair type=CephPgid,name=pgid", "start repair on <pgid>")
+COMMAND("pg debug type=CephChoices,strings=unfound_objects_exist|degraded_pgs_exist,name=debugop", "debug info on pg")
+COMMAND("pg force_create_pg type=CephPgid,name=pgid", "force creation of pg <pgid>")
+COMMAND("pg set_full_ratio type=CephFloat,range=0.0|1.0,name=ratio", "set_full_ratio help")
 COMMAND("pg set_nearfull_ratio type=CephFloat,range=0.0|1.0,name=ratio", "pg set_nearfull_ratio help")
 
 /*
@@ -53,6 +53,8 @@ COMMAND("sync status", "report status of monitors")
 COMMAND("sync force type=CephChoices,strings=--yes-i-really-mean-it,name=validate1 type=CephChoices,strings=--i-know-what-i-am-doing,name=validate2", "force sync of and clear monitor store")
 COMMAND("heap type=CephChoices,strings=dump|start_profiler|stop_profiler|release|stats,name=heapcmd", "show heap usage info (available only if compiled with tcmalloc")
 COMMAND("quorum type=CephChoices,strings=enter|exit,n=1,name=quorumcmd", "enter or exit quorum")
+COMMAND("tell type=CephName,name=target type=CephString,n=N,name=args", "send a command to a specific daemon")
+COMMAND("pg type=CephPgid,name=pgid", "send a command to a specific daemon")
 
 /*
  * MDS commands (MDSMonitor.cc)
@@ -149,12 +151,3 @@ COMMAND("osd pool get type=CephPoolname,name=pool type=CephChoices,name=var,stri
 COMMAND("osd pool set type=CephPoolname,name=pool type=CephChoices,name=var,strings=size|min_size|crash_replay_interval|pg_num|pgp_num|crush_ruleset type=CephChoices,name=sure,strings=--allow-experimental-feature,req=false", "set pool parameter <var> to <val>")
 COMMAND("osd reweight-by-utilization type=CephInt,name=oload,range=0,req=false", "reweight OSDs by utilization <oload XXX>")
 COMMAND("osd thrash type=CephInt,name=num_epochs,range=0", "thrash OSDs for <num_epochs>")
-
-
-
-
-
-
-
-
-
