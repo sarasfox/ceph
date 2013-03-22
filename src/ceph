@@ -126,8 +126,11 @@ class CephInt(CephArgtype):
 
     def __str__(self):
         r = ''
-        if len(self.range):
-            r = '(range {} len {})'.format(self.range, len(self.range))
+        if len(self.range) == 1:
+            r = '[{}-]'.format(self.range[0])
+        if len(self.range) == 2:
+            r = '[{}-{}]'.format(self.range[0], self.range[1])
+
         return '<int{}>'.format(r)
 
 
@@ -159,8 +162,10 @@ class CephFloat(CephArgtype):
 
     def __str__(self):
         r = ''
-        if len(self.range):
-            r = "(range {})".format(self.range)
+        if len(self.range) == 1:
+            r = '[{}-]'.format(self.range[0])
+        if len(self.range) == 2:
+            r = '[{}-{}]'.format(self.range[0], self.range[1])
         return '<float{}>'.format(r)
 
 """
