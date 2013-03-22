@@ -556,10 +556,10 @@ def parse_json_funcsig(s):
         print >> sys.stderr, "Couldn't parse JSON {}: {}".format(s, e)
         raise e
     sigdict = {}
-    for cmdtag, sigandhelp in overall.iteritems():
-        helptext = sigandhelp.get('help', 'no help available')
+    for cmdtag, cmd in overall.iteritems():
+        helptext = cmd.get('help', 'no help available')
         try:
-            sig = sigandhelp['sig']
+            sig = cmd['sig']
         except KeyError:
             s = "JSON descriptor {} has no 'sig'".format(cmdtag)
             raise JsonFormat(s)
@@ -795,8 +795,8 @@ def main():
     verbose = parsed_args.verbose
     if verbose:
         for cmdtag in sorted(sigdict.keys()):
-            sigandhelp = sigdict[cmdtag]
-            sig = sigandhelp['sig']
+            cmd = sigdict[cmdtag]
+            sig = cmd['sig']
             print '{}: {}'.format(cmdtag, concise_sig(sig))
 
     # special commands: '-s' is its own command
@@ -837,8 +837,8 @@ def main():
         # (so we can maybe give a more-useful error message)
         best_match_cnt = 0
         bestsigs = []
-        for op, sigandhelp in sigdict.iteritems():
-            sig = sigandhelp['sig']
+        for cmdtag, cmd in sigdict.iteritems():
+            sig = cmd['sig']
             matched = matchnum(childargs, sig, partial=True)
             if (matched > best_match_cnt):
                 if verbose:
@@ -846,22 +846,22 @@ def main():
                         "better match: {} > {}:{} ".format(matched,
                                                            best_match_cnt, sig)
                 best_match_cnt = matched
-                bestsigs = [{op:sigandhelp}]
+                bestsigs = [{cmdtag:cmd}]
             elif matched == best_match_cnt:
                 if verbose:
                     print >> sys.stderr, \
                         "equal match: {} > {}:{} ".format(matched,
                                                            best_match_cnt, sig)
-                bestsigs.append({op:sigandhelp})
+                bestsigs.append({cmdtag:cmd})
 
         if verbose:
             print >> sys.stderr, "bestsigs: ", bestsigs
 
         # for everything in bestsigs, look for a true match
         for cmdsig in bestsigs:
-            for (cmdtag, sigandhelp) in cmdsig.iteritems():
-                sig = sigandhelp['sig']
-                helptext = sigandhelp['helptext']
+            for (cmdtag, cmd) in cmdsig.iteritems():
+                sig = cmd['sig']
+                helptext = cmd['helptext']
                 try:
                     valid_dict = validate(childargs, sig)
                     found = sig
