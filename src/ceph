@@ -13,6 +13,7 @@ import uuid
 import argparse
 import select
 import fcntl
+import string
 
 """
 Something wrong with arguments
@@ -769,6 +770,84 @@ def do_command(command, d, verbose=False, endless=False):
         print outdata
     return p.returncode
 
+"""
+sort descriptors by prefixes, defined as the concatenation of all simple
+strings in the descriptor; this works out to just the leading strings.
+"""
+def descsort(sh1, sh2):
+    return cmp(concise_sig(sh1['sig']), concise_sig(sh2['sig']))
+
+
+"""
+generator to transform s into a sequence of strings width or shorter,
+for wrapping text to a specific column width.
+Attempt to break on anything but dontsplit characters.
+indent is amount to indent 2nd-through-nth lines.
+
+so "long string long string long string" width=11 indent=1 becomes
+'long string', ' long string', ' long string' so that it can be printed
+as 
+long string
+ long string
+ long string
+
+Consumes s.
+"""
+dontsplit = string.letters + '{[<>]}'
+
+def wrap(s, width, indent):
+    result = ''
+    leader = ''
+    while len(s):
+
+        if (len(s) <= width):
+            # no splitting; just possibly indent
+            result = leader + s
+            s = ''
+            yield result
+
+        else:
+            splitpos = width
+            while (splitpos > 0) and (s[splitpos-1] in dontsplit):
+                splitpos -= 1
+
+            if splitpos == 0:
+                splitpos = width
+
+            if result:
+                # prior result means we're mid-iteration, indent
+                result = leader
+            else:
+                # first time, set leader and width for next
+                leader = ' ' * indent
+                width -= 1      # for subsequent space additions
+
+            # remove any leading spaces in this chunk of s
+            result += s[:splitpos].lstrip()
+            s = s[splitpos:]
+
+            yield result
+
+    raise StopIteration
+
+def format_help(cmddict):
+    fullusage = ''
+    for cmd in sorted(cmddict.itervalues(), cmp=descsort):
+
+        siglines = [l for l in wrap(concise_sig(cmd['sig']), 40, 1)]
+        helplines = [l for l in wrap(cmd['helptext'], 39, 1)]
+
+        # make lists the same length
+        maxlen = max(len(siglines), len(helplines))
+        siglines.extend([''] * (maxlen - len(siglines)))
+        helplines.extend([''] * (maxlen - len(helplines)))
+
+        # so we can zip them for output
+        for (s, h) in zip(siglines, helplines):
+            fullusage += '{:40s} {}\n'.format(s, h)
+
+    return fullusage
+
 def main():
     #global cluster
     #cluster = rados.Rados(conffile='')
@@ -786,11 +865,7 @@ def main():
     outdata = get_process_output(command + ['get_command_descriptions'])
     sigdict = parse_json_funcsig(outdata.strip())
 
-    fullusage = ''
-    for op, sigandhelp in sigdict.iteritems():
-        fullusage += '{}: {}\n'.format(concise_sig(sigandhelp['sig']),
-                                       sigandhelp['helptext'])
-    parsed_args, childargs = parse_cmdargs()
+    parsed_args, childargs = parse_cmdargs(usage='\n' + format_help(sigdict))
 
     verbose = parsed_args.verbose
     if verbose:
