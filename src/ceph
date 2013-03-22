@@ -867,9 +867,12 @@ def main():
                     found = sig
                     break
                 except ArgumentPrefix:
-                    # this is common, and we don't want to whine about it
+                    # this means a CephPrefix type didn't match; since
+                    # this is common, just eat it
                     pass
                 except ArgumentError as e:
+                    # prefixes matched, but some other arg didn't;
+                    # this is interesting information
                     print >> sys.stderr, '{}: invalid command'.\
                         format(' '.join(childargs))
                     print >> sys.stderr, '{}'.format(e)
