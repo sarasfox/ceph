@@ -33,7 +33,6 @@ COMMAND("auth add type=CephName,name=entity type=CephString,name=caps,n=N,req=fa
 COMMAND("auth get-or-create-key type=CephName,name=entity type=CephString,name=caps,n=N,req=false", "get, or add, key for <name> from system/caps pairs specified in the command.  If key already exists, any given caps must match the existing caps for that key.")
 COMMAND("auth get-or-create type=CephName,name=entity type=CephString,name=caps,n=N,req=false", "add auth info for <name> from input file, or random key if no input given, and/or any caps specified in the command")
 COMMAND("auth caps type=CephName,name=entity type=CephString,name=caps,n=N", "update caps for <name> from caps specified in the command")
-COMMAND("auth caps type=CephName,name=entity type=CephString,name=caps,n=N", "update caps for <name> from caps specified in the command")
 COMMAND("auth del type=CephName,name=entity", "delete all caps for <name>")
 
 /*
