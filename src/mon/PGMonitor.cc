@@ -1105,7 +1105,6 @@ bool PGMonitor::preprocess_command(MMonCommand *m)
 	     prefix == "pg dump_json" ||
 	     prefix == "pg dump_pools_json") {
     string format;
-    string what = "all";
     string val;
     Formatter *f = 0;
     r = 0;
@@ -1125,10 +1124,20 @@ bool PGMonitor::preprocess_command(MMonCommand *m)
     else
       f = 0;
     stringstream ds;
+    vector<string> dumpcontents;
+    set<string> what;
+    if (cmd_getval(g_ceph_context, cmdmap, "dumpcontents", dumpcontents)) {
+      copy(dumpcontents.begin(), dumpcontents.end(),
+	   inserter(what, what.end()));
+    }
+    if (what.empty())
+      what.insert("all");
     if (f) {
       vector<string> dumpcontents;
-      cmd_getval(g_ceph_context, cmdmap, "dumpcontents", dumpcontents);
-      set<string>what(dumpcontents.begin(), dumpcontents.end());
+      if (cmd_getval(g_ceph_context, cmdmap, "dumpcontents", dumpcontents)) {
+	copy(dumpcontents.begin(), dumpcontents.end(),
+	     inserter(what, what.end()));
+      }
       if (what.empty())
 	what.insert("all");
       if (what.count("all")) {
@@ -1153,7 +1162,7 @@ bool PGMonitor::preprocess_command(MMonCommand *m)
       f->flush(ds);
       delete f;
     } else {
-      // plain format ignores section selectors
+      // plain format ignores dumpcontents
       pg_map.dump(ds);
     }
     rdata.append(ds);
