@@ -696,9 +696,14 @@ def try_validate(s, sig):
         print '{!r} failed: {}'.format(s, e)
     print
 
-def parse_cmdargs(usage=''):
-    parser = argparse.ArgumentParser(description='Frontend for ceph CLI',
-                                     usage=usage)
+def parse_cmdargs(usage='', epilog='', add_help=True):
+    # alias: let the line-wrapping be sane
+    AP = argparse.ArgumentParser
+    # formatter_class: don't linewrap epilog (our custom-formatted help)
+    parser = AP(description='Frontend for ceph CLI', usage=usage,
+                epilog=epilog, add_help=add_help,
+                formatter_class=argparse.RawDescriptionHelpFormatter)
+
     parser.add_argument('-c', dest='cephconf',
                         help='ceph configuration file')
     parser.add_argument('-i', '--in-file', dest='input_file',
@@ -865,7 +870,7 @@ def main():
     outdata = get_process_output(command + ['get_command_descriptions'])
     sigdict = parse_json_funcsig(outdata.strip())
 
-    parsed_args, childargs = parse_cmdargs(usage='\n' + format_help(sigdict))
+    parsed_args, childargs = parse_cmdargs(epilog='\n' + format_help(sigdict))
 
     verbose = parsed_args.verbose
     if verbose:
