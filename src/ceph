@@ -931,8 +931,6 @@ def main():
 
     # validate input args against list of sigs
 
-    found = None
-    valid_dict = {}
     if childargs:
         # look for best match, accumulate possibles in bestsigs
         # (so we can maybe give a more-useful error message)
@@ -958,6 +956,7 @@ def main():
         if verbose:
             print >> sys.stderr, "bestsigs: ", bestsigs
 
+        found = []
         # for everything in bestsigs, look for a true match
         for cmdsig in bestsigs:
             for (cmdtag, cmd) in cmdsig.iteritems():
