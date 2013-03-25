@@ -708,6 +708,8 @@ def parse_cmdargs(usage='', epilog='', add_help=True):
                         help='ceph configuration file')
     parser.add_argument('-i', '--in-file', dest='input_file',
                         help='input file')
+    parser.add_argument('--id', dest='client_id',
+                        help='client id for authentication')
     parser.add_argument('-o', '--out-file', dest='output_file',
                         help='output file')
     parser.add_argument('-k', '--keyring', dest='keyring_file',
@@ -862,6 +864,18 @@ def main():
         command = "./cephbin"
     command = [command]
 
+    # we have to parse twice, because we have to collect auth-related
+    # options to be able to run the "get_command_descriptions" command.
+    parsed_args, childargs = parse_cmdargs(add_help=False)
+
+    # pass on --id, -k, -c
+    if parsed_args.client_id:
+        command.extend(['--id', parsed_args.client_id])
+    if parsed_args.keyring_file:
+        command.extend(['-k', parsed_args.keyring_file])
+    if parsed_args.cephconf:
+        command.extend(['-c', parsed_args.cephconf])
+
     # fetch JSON sigs from command
     # each line contains one command signature (a placeholder name
     # of the form 'cmdNNN' followed by an array of argument descriptors)
@@ -886,9 +900,10 @@ def main():
         command.append('-s')
         got_command = True
 
-    # -w/--watch* are also their own endless monitoring commands
 
-    # this is ugly, but Namespace() isn't quite rich enough
+    # this is ugly, but Namespace() isn't quite rich enough.
+    # handle any --watch or -w command by marking endless,
+    # passing on.
     for k,v in parsed_args._get_kwargs():
         if k.startswith('watch') and v:
             arg = '--' + k.replace('_', '-')
@@ -896,13 +911,11 @@ def main():
             endless = True;
             got_command = True
 
-    # just pass on -i, -o, -k
+    # add on -i, -o if given
     if parsed_args.input_file:
         command.extend(['-i', parsed_args.input_file])
     if parsed_args.output_file:
         command.extend(['-o', parsed_args.output_file])
-    if parsed_args.keyring_file:
-        command.extend(['-k', parsed_args.keyring_file])
 
     if parsed_args.admin_socket:
         command.extend(['--admin-daemon', parsed_args.admin_socket] + childargs)
