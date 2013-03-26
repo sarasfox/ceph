@@ -931,6 +931,7 @@ def main():
 
     # validate input args against list of sigs
 
+    valid_dict = {}
     if childargs:
         # look for best match, accumulate possibles in bestsigs
         # (so we can maybe give a more-useful error message)
@@ -956,7 +957,6 @@ def main():
         if verbose:
             print >> sys.stderr, "bestsigs: ", bestsigs
 
-        found = []
         # for everything in bestsigs, look for a true match
         for cmdsig in bestsigs:
             for (cmdtag, cmd) in cmdsig.iteritems():
@@ -965,6 +965,7 @@ def main():
                 try:
                     valid_dict = validate(childargs, sig)
                     found = sig
+                    got_command = True
                     break
                 except ArgumentPrefix:
                     # this means a CephPrefix type didn't match; since
@@ -979,6 +980,9 @@ def main():
                     print >> sys.stderr, "did you mean {}?\n\t{}".\
                         format(concise_sig(sig), helptext)
                     pass
+
+        if parsed_args.output_format:
+            valid_dict['format'] = parsed_args.output_format
 
         # XXX - could we do this in creating the vals in validate rather
         # than postprocessing?
@@ -998,11 +1002,9 @@ def main():
                 (len(val) == 1):
                 valid_dict[key] = val[0]
 
-    if not (found or got_command):
+    if not (got_command):
         return 1
 
-    if parsed_args.output_format:
-        valid_dict['format'] = parsed_args.output_format
     sys.exit(do_command(command, valid_dict, verbose, endless))
 
 ###
