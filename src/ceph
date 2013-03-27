@@ -940,6 +940,7 @@ def main():
 
     # validate input args against list of sigs
 
+    found = []
     valid_dict = {}
     if childargs:
         # look for best match, accumulate possibles in bestsigs
@@ -1012,6 +1013,7 @@ def main():
                 valid_dict[key] = val[0]
 
     if not (got_command):
+        print >> sys.stderr, "no command, exiting"
         return 1
 
     sys.exit(do_command(command, valid_dict, verbose, endless))
