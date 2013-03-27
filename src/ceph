@@ -981,6 +981,14 @@ def main():
                         format(concise_sig(sig), helptext)
                     pass
 
+        if not found:
+            print >> sys.stderr, 'no valid command found'
+            print >> sys.stderr, 'close matches:'
+            for cmdsig in bestsigs:
+                for (cmdtag, cmd) in cmdsig.iteritems():
+                    print >> sys.stderr, concise_sig(cmd['sig'])
+            return 1
+
         if parsed_args.output_format:
             valid_dict['format'] = parsed_args.output_format
 
