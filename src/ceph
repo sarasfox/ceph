@@ -694,16 +694,6 @@ def validate(args, signature):
     # print "validate returning", d
     return d
 
-# convenience function for testing
-
-def try_validate(s, sig):
-    try:
-        dump = validate(s, sig)
-        print '{!r} ok against {}'.format(s, sig)
-        print dump
-    except Exception as e:
-        print '{!r} failed: {}'.format(s, e)
-    print
 
 def parse_cmdargs(usage='', epilog='', add_help=True):
     # alias: let the line-wrapping be sane
