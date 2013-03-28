@@ -229,8 +229,8 @@ bool MonmapMonitor::preprocess_command(MMonCommand *m)
     cmd_getval(g_ceph_context, cmdmap, "format", format, string("plain"));
     epoch_t epoch = 0;
     int64_t epochval;
-    cmd_getval(g_ceph_context, cmdmap, "epoch", epochval);
-    epoch = epochval;
+    if (cmd_getval(g_ceph_context, cmdmap, "epoch", epochval))
+      epoch = epochval;
 
     MonMap *p = mon->monmap;
     if (epoch) {
