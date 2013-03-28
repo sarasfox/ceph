@@ -5,7 +5,7 @@
 COMMAND("pg stat", "show placement group status.  This will be a really really long help message to show what happens when the help message is much longer than the command string itself.")
 COMMAND("pg getmap", "get binary pg map to -o/stdout")
 COMMAND("pg send_pg_creates", "trigger pg creates to be issued")
-COMMAND("pg dump type=CephChoices,strings=all|summary|sum|pools|osds|pgs,n=N,name=dumpcontents", "show human-readable versions of pg map")
+COMMAND("pg dump type=CephChoices,strings=all|summary|sum|pools|osds|pgs,n=N,name=dumpcontents,req=false", "show human-readable versions of pg map")
 COMMAND("pg dump_json type=CephChoices,strings=all|summary|sum|pools|osds|pgs,n=N,name=dumpcontents", "show human-readable version of pg map in json only")
 COMMAND("pg dump_pools_json", "show pg pools info in json only")
 COMMAND("pg dump_stuck type=CephChoices,strings=inactive|unclean|stale,n=N,name=stuckops", "show information about stuck pgs")
@@ -87,7 +87,8 @@ COMMAND("mds newfs type=CephInt,name=metadata,range=0 type=CephInt,name=data,ran
 /*
  * Monmap commands
  */
-COMMAND("mon stat", "dump monitor status (monmap)")
+COMMAND("mon dump type=CephInt,name=epoch,req=false", "dump formatted monmap (optionally from epoch)")
+COMMAND("mon stat", "summarize monitor status")
 COMMAND("mon getmap type=CephInt,range=0,name=epoch,req=false", "get monmap")
 COMMAND("mon tell type=CephString,name=who type=CephString,n=N,name=args", "send command to specific monitor(s)")
 COMMAND("mon add type=CephString,name=name type=CephIPAddr,name=addr", "add new monitor named <name> at <addr>")
