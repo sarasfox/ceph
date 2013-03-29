@@ -2351,36 +2351,20 @@ void Monitor::get_status(stringstream &ss, Formatter *f)
 }
 
 /**
- * read a signature description out of sig, and dump it to f.
- * a signature description is a set of space-separated words; each
- * word is either:
- * - a plain word, in which case it must be present literally, or
- * - a list of comma-separated key=val parameters describing the command
- *   if value needs a space or comma, quote the whole value with "
- *
- *   Common keys:
- *   type={CephInt, CephFloat, CephString, CephHelp, CephSocketpath,
- *         CephIPAddr, CephPoolname, CephObjectname, CephPgid, CephName,
- *         CephChoices, CephFilepath, CephFragment, CephUUID}
- *   name=argname (will come back in parsed command JSON)
- *   req={true,false} is this parameter required
- *   n=<number of this parameter required>  n/N means "1-N"
- *
- *   Type-specific keys:
- *   CephInt/CephFloat: range={min} or range={min|max}
- *   CephChoices: strings="s1|s2|s3" set of acceptable strings
- *   		  (n=2 would mean "allow two repetitions from the set"
+ * Read a command description list out of cmds, and dump it to f.
+ * A signature description is a set of space-separated words; 
+ * see MonCommands.h for more info.
  */
 
 static void
-dump_sig_to_json(Formatter *f, const char *sig)
+dump_cmds_to_json(Formatter *f, const char *cmds)
 {
   // put whole command signature in an already-opened container
   // elements are: "name", meaning "the typeless name that means a literal"
   // an object {} with key:value pairs representing an argument
 
   int argnum = 0;
-  stringstream ss(sig);
+  stringstream ss(cmds);
   std::string word;
 
   while (std::getline(ss, word, ' ')) {
@@ -2431,7 +2415,7 @@ struct MonCommand {
   const char *helpstring;
 } mon_commands[] = {
 #define COMMAND(parsesig, helptext) \
-  {parsesig, helptext}, 
+  {parsesig, helptext},
 #include <mon/MonCommands.h>
 };
 
@@ -2467,7 +2451,7 @@ void Monitor::handle_command(MMonCommand *m)
       secname << "cmd" << setfill('0') << std::setw(3) << cmdnum;
       f->open_object_section(secname.str().c_str());
       f->open_array_section("sig");
-      dump_sig_to_json(f, cp->cmdstring);
+      dump_cmds_to_json(f, cp->cmdstring);
       f->close_section();  // desc array
       f->dump_string("help", string(cp->helpstring));
       f->close_section(); // overall object
