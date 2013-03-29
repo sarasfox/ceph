@@ -2450,6 +2450,12 @@ void Monitor::handle_command(MMonCommand *m)
     return;
   }
 
+  if (m->cmd.empty()) {
+    string rs = "No command supplied";
+    reply_command(m, -EINVAL, rs, 0);
+    return;
+  }
+
   if (m->cmd[0] == "get_command_descriptions") {
     int cmdnum = 0;
     JSONFormatter *f = new JSONFormatter();
@@ -2477,6 +2483,7 @@ void Monitor::handle_command(MMonCommand *m)
     //ss << "dumped command descriptions";
     //reply_command(m, 0, ss.str(), rdata, 0);
     reply_command(m, 0, "", rdata, 0);
+    return;
   }
 
   bool access_cmd;
@@ -2495,21 +2502,17 @@ void Monitor::handle_command(MMonCommand *m)
   string rs;
   int r = -EINVAL;
   rs = "unrecognized command";
-  if (m->cmd.empty())
-    goto out;
 
   if (!cmdmap_from_json(m->cmd, &cmdmap, ss)) {
     // ss has reason for failure
     r = -EINVAL;
     rs = ss.str();
-    goto out;
+    if (!m->get_source().is_mon())  // don't reply to mon->mon commands
+      reply_command(m, r, rs, 0);
+    else
+      m->put();
   }
 
-  if (cmdmap.empty()) {
-    r = -EINVAL;
-    rs = "JSON contained no command";
-    goto out;
-  }
 
   cmd_getval(g_ceph_context, cmdmap, "prefix", prefix);
   get_str_vec(prefix, prefix_vec);
