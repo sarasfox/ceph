@@ -302,6 +302,8 @@ class CephPgid(CephArgtype):
         if s.find('.') == -1:
             raise ArgumentFormat('pgid has no .')
         poolid, pgnum = s.split('.')
+        if poolid < 0:
+            raise ArgumentFormat('pool {} < 0'.format(poolid))
         try:
             pgnum = int(pgnum, 16)
         except:
@@ -983,7 +985,8 @@ def main():
     sigdata = get_process_output(command + ['get_command_descriptions']).strip()
     sigdict = parse_json_funcsig(sigdata)
 
-    parsed_args, childargs = parse_cmdargs(epilog='\n' + format_help(sigdict))
+    parsed_args, childargs = parse_cmdargs(epilog='\nAvailable commands: \n\n'
+                                           + format_help(sigdict))
 
     if verbose:
         for cmdtag in sorted(sigdict.keys()):
