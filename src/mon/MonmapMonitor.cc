@@ -245,19 +245,18 @@ bool MonmapMonitor::preprocess_command(MMonCommand *m)
     }
     if (p) {
       stringstream ds;
-      if (format == "json") {
-	Formatter *f = new JSONFormatter(true);
+      boost::scoped_ptr<Formatter> f(new_formatter(format));
+      if (f) {
 	f->open_object_section("monmap");
-	p->dump(f);
+	p->dump(f.get());
 	f->open_array_section("quorum");
 	for (set<int>::iterator q = mon->get_quorum().begin(); q != mon->get_quorum().end(); ++q)
 	  f->dump_int("mon", *q);
 	f->close_section();
 	f->close_section();
 	f->flush(ds);
-	delete f;
 	r = 0;
-      } else if (format == "plain") {
+      } else {
 	p->print(ds);
 	r = 0;
       } 

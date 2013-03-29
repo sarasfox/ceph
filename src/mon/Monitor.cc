@@ -2513,6 +2513,9 @@ void Monitor::handle_command(MMonCommand *m)
       m->put();
   }
 
+  string format;
+  cmd_getval(g_ceph_context, cmdmap, "format", format, string("plain"));
+  boost::scoped_ptr<Formatter> f(new_formatter(format));
 
   cmd_getval(g_ceph_context, cmdmap, "prefix", prefix);
   get_str_vec(prefix, prefix_vec);
@@ -2608,39 +2611,23 @@ void Monitor::handle_command(MMonCommand *m)
       goto out;
     }
 
-    string format;
-    cmd_getval(g_ceph_context, cmdmap, "format", format, string("plain"));
+    stringstream ss;
     string detail;
     cmd_getval(g_ceph_context, cmdmap, "detail", detail);
 
-    JSONFormatter *jf = NULL;
-
-    if (format != "plain") {
-      if (format == "json") {
-        jf = new JSONFormatter(true);
-      } else {
-        r = -EINVAL;
-        stringstream err_ss;
-        err_ss << "unrecognized format '" << format
-          << "' (available: plain, json)";
-        rs = err_ss.str();
-        goto out;
-      }
-    }
-
-    stringstream ss;
     if (prefix == "status") {
-      get_status(ss, jf);
+      // get_status handles f == NULL
+      get_status(ss, f.get());
 
-      if (jf) {
-        jf->flush(ss);
+      if (f) {
+        f->flush(ss);
         ss << '\n';
       }
     } else if (prefix == "health") {
       string health_str;
-      get_health(health_str, detail == "detail" ? &rdata : NULL, jf);
-      if (jf) {
-        jf->flush(ss);
+      get_health(health_str, detail == "detail" ? &rdata : NULL, f.get());
+      if (f) {
+        f->flush(ss);
         ss << '\n';
       } else {
         ss << health_str;
@@ -2649,17 +2636,17 @@ void Monitor::handle_command(MMonCommand *m)
       r = 0;
     } else if (prefix == "df") {
       bool verbose = (detail == "detail");
-      if (jf)
-        jf->open_object_section("stats");
+      if (f)
+        f->open_object_section("stats");
 
-      pgmon()->dump_fs_stats(ss, jf, verbose);
-      if (!jf)
+      pgmon()->dump_fs_stats(ss, f.get(), verbose);
+      if (!f)
         ss << '\n';
-      pgmon()->dump_pool_stats(ss, jf, verbose);
+      pgmon()->dump_pool_stats(ss, f.get(), verbose);
 
-      if (jf) {
-        jf->close_section();
-        jf->flush(ss);
+      if (f) {
+        f->close_section();
+        f->flush(ss);
         ss << '\n';
       }
     } else {
@@ -2675,12 +2662,13 @@ void Monitor::handle_command(MMonCommand *m)
       goto out;
     }
 
-    JSONFormatter jf(true);
-
-    jf.open_object_section("report");
-    jf.dump_string("version", ceph_version_to_str());
-    jf.dump_string("commit", git_version_to_str());
-    jf.dump_stream("timestamp") << ceph_clock_now(NULL);
+    // this must be formatted, in its current form
+    if (!f)
+      f.reset(new_formatter("json-pretty"));
+    f->open_object_section("report");
+    f->dump_string("version", ceph_version_to_str());
+    f->dump_string("commit", git_version_to_str());
+    f->dump_stream("timestamp") << ceph_clock_now(NULL);
 
     string d;
     for (unsigned i = 1; i < m->cmd.size(); i++) {
@@ -2688,19 +2676,19 @@ void Monitor::handle_command(MMonCommand *m)
         d += " ";
       d += m->cmd[i];
     }
-    jf.dump_string("tag", d);
+    f->dump_string("tag", d);
 
     string hs;
-    get_health(hs, NULL, &jf);
+    get_health(hs, NULL, f.get());
 
-    monmon()->dump_info(&jf);
-    osdmon()->dump_info(&jf);
-    mdsmon()->dump_info(&jf);
-    pgmon()->dump_info(&jf);
+    monmon()->dump_info(f.get());
+    osdmon()->dump_info(f.get());
+    mdsmon()->dump_info(f.get());
+    pgmon()->dump_info(f.get());
 
-    jf.close_section();
+    f->close_section();
     stringstream ss;
-    jf.flush(ss);
+    f->flush(ss);
 
     bufferlist bl;
     bl.append("-------- BEGIN REPORT --------\n");

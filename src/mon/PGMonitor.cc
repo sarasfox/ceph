@@ -1106,7 +1106,6 @@ bool PGMonitor::preprocess_command(MMonCommand *m)
 	     prefix == "pg dump_pools_json") {
     string format;
     string val;
-    Formatter *f = 0;
     r = 0;
     // perhaps these would be better in the parsing, but it's weird
     if (prefix == "pg dump_json") {
@@ -1117,12 +1116,7 @@ bool PGMonitor::preprocess_command(MMonCommand *m)
       cmd_putval(g_ceph_context, cmdmap, "dumpcontents", string("pool"));
     }
     cmd_getval(g_ceph_context, cmdmap, "format", format, string("json"));
-    if (format == "json")
-      f = new JSONFormatter(true);
-    else if (format == "xml")
-      f = new XMLFormatter(true);
-    else
-      f = 0;
+    boost::scoped_ptr<Formatter> f(new_formatter(format));
     stringstream ds;
     vector<string> dumpcontents;
     set<string> what;
@@ -1142,25 +1136,24 @@ bool PGMonitor::preprocess_command(MMonCommand *m)
 	what.insert("all");
       if (what.count("all")) {
 	f->open_object_section("pg_map");
-	pg_map.dump(f);
+	pg_map.dump(f.get());
 	f->close_section();
       } else if (what.count("summary") || what.count("sum")) {
 	f->open_object_section("pg_map");
-	pg_map.dump_basic(f);
+	pg_map.dump_basic(f.get());
 	f->close_section();
       } else {
 	if (what.count("pools")) {
-	  pg_map.dump_pool_stats(f);
+	  pg_map.dump_pool_stats(f.get());
 	}
 	if (what.count("osds")) {
-	  pg_map.dump_osd_stats(f);
+	  pg_map.dump_osd_stats(f.get());
 	}
 	if (what.count("pgs")) {
-	  pg_map.dump_pg_stats(f);
+	  pg_map.dump_pg_stats(f.get());
 	}
       }
       f->flush(ds);
-      delete f;
     } else {
       // plain format ignores dumpcontents
       pg_map.dump(ds);
@@ -1589,10 +1582,10 @@ int PGMonitor::dump_stuck_pg_stats(ostream& ss,
   utime_t cutoff = now - utime_t(threshold, 0);
 
   stringstream ds;
-  if (format == "json") {
-    JSONFormatter jsf(true);
-    pg_map.dump_stuck(&jsf, stuck_type, cutoff);
-    jsf.flush(ds);
+  boost::scoped_ptr<Formatter> f(new_formatter(format));
+  if (f) {
+    pg_map.dump_stuck(f.get(), stuck_type, cutoff);
+    f->flush(ds);
   } else {
     pg_map.dump_stuck_plain(ds, stuck_type, cutoff);
   }

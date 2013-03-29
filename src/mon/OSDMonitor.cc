@@ -1815,6 +1815,7 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
     cmd_getval(g_ceph_context, cmdmap, "epoch", epochnum, (int64_t)0);
     epoch = epochnum;
 
+    boost::scoped_ptr<Formatter> f(new_formatter(format));
     OSDMap *p = &osdmap;
     if (epoch) {
       bufferlist b;
@@ -1832,32 +1833,31 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
     if (p) {
       if (prefix == "osd dump") {
 	stringstream ds;
-	if (format == "json") {
-	  p->dump_json(ds);
-	  r = 0;
-	} else if (format == "plain") {
+	if (f) {
+	  p->dump(f.get());
+	  f->flush(ds);
+	} else {
 	  p->print(ds);
 	  r = 0;
 	} 
 	if (r == 0) {
 	  rdata.append(ds);
-	  if (format != "json")
+	  if (!f)
 	    ss << " ";
 	}
       } else if (prefix == "osd ls") {
 	stringstream ds;
-	if (format == "json") {
-	  JSONFormatter jf(true);
-	  jf.open_array_section("osds");
+	if (f) {
+	  f->open_array_section("osds");
 	  for (int i = 0; i < osdmap.get_max_osd(); i++) {
 	    if (osdmap.exists(i)) {
-	      jf.dump_int("osd", i);
+	      f->dump_int("osd", i);
 	    }
 	  }
-	  jf.close_section();
-	  jf.flush(ds);
+	  f->close_section();
+	  f->flush(ds);
 	  r = 0;
-	} else if (format == "plain") {
+	} else {
 	  bool first = true;
 	  for (int i = 0; i < osdmap.get_max_osd(); i++) {
 	    if (osdmap.exists(i)) {
@@ -1872,14 +1872,13 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
 	rdata.append(ds);
       } else if (prefix == "osd tree") {
 	stringstream ds;
-	if (format == "json") {
-	  JSONFormatter jf(true);
-	  jf.open_object_section("tree");
-	  p->print_tree(NULL, &jf);
-	  jf.close_section();
-	  jf.flush(ds);
+	if (f) {
+	  f->open_object_section("tree");
+	  p->print_tree(NULL, f.get());
+	  f->close_section();
+	  f->flush(ds);
 	  r = 0;
-	} else if (format == "plain") {
+	} else {
 	  p->print_tree(&ds, NULL);
 	  r = 0;
 	} 
@@ -1937,18 +1936,21 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
       r = -ENOENT;
       goto out;
     }
-    JSONFormatter jf(true);
-    jf.open_object_section("osd_location");
-    jf.dump_int("osd", osd);
-    jf.dump_stream("ip") << osdmap.get_addr(osd);
-    jf.open_object_section("crush_location");
+    string format;
+    cmd_getval(g_ceph_context, cmdmap, "format", format, string("plain"));
+    boost::scoped_ptr<Formatter> f(new_formatter(format));
+
+    f->open_object_section("osd_location");
+    f->dump_int("osd", osd);
+    f->dump_stream("ip") << osdmap.get_addr(osd);
+    f->open_object_section("crush_location");
     map<string,string> loc = osdmap.crush->get_full_location(osd);
     for (map<string,string>::iterator p = loc.begin(); p != loc.end(); ++p)
-      jf.dump_string(p->first.c_str(), p->second);
-    jf.close_section();
-    jf.close_section();
+      f->dump_string(p->first.c_str(), p->second);
+    f->close_section();
+    f->close_section();
     ostringstream rs;
-    jf.flush(rs);
+    f->flush(rs);
     rs << "\n";
     rdata.append(rs.str());
     r = 0;
@@ -2037,34 +2039,40 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
 
   } else if (prefix == "osd crush rule list" ||
 	     prefix == "osd crush rule ls") {
-    JSONFormatter jf(true);
-    jf.open_array_section("rules");
-    osdmap.crush->list_rules(&jf);
-    jf.close_section();
+    string format;
+    cmd_getval(g_ceph_context, cmdmap, "format", format, string("plain"));
+    boost::scoped_ptr<Formatter> f(new_formatter(format));
+    f->open_array_section("rules");
+    osdmap.crush->list_rules(f.get());
+    f->close_section();
     ostringstream rs;
-    jf.flush(rs);
+    f->flush(rs);
     rs << "\n";
     rdata.append(rs.str());
     r = 0;
 
   } else if (prefix == "osd crush rule dump") {
-    JSONFormatter jf(true);
-    jf.open_array_section("rules");
-    osdmap.crush->dump_rules(&jf);
-    jf.close_section();
+    string format;
+    cmd_getval(g_ceph_context, cmdmap, "format", format, string("plain"));
+    boost::scoped_ptr<Formatter> f(new_formatter(format));
+    f->open_array_section("rules");
+    osdmap.crush->dump_rules(f.get());
+    f->close_section();
     ostringstream rs;
-    jf.flush(rs);
+    f->flush(rs);
     rs << "\n";
     rdata.append(rs.str());
     r = 0;
 
   } else if (prefix == "osd crush dump") {
-    JSONFormatter jf(true);
-    jf.open_object_section("crush_map");
-    osdmap.crush->dump(&jf);
-    jf.close_section();
+    string format;
+    cmd_getval(g_ceph_context, cmdmap, "format", format, string("plain"));
+    boost::scoped_ptr<Formatter> f(new_formatter(format));
+    f->open_object_section("crush_map");
+    osdmap.crush->dump(f.get());
+    f->close_section();
     ostringstream rs;
-    jf.flush(rs);
+    f->flush(rs);
     rs << "\n";
     rdata.append(rs.str());
     r = 0;
