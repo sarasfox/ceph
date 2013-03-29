@@ -1168,7 +1168,11 @@ bool PGMonitor::preprocess_command(MMonCommand *m)
     cmd_getval(g_ceph_context, cmdmap, "format", format, string("plain"));
     if (stuckop_vec.empty())
       stuckop_vec.push_back("unclean");
-    r = dump_stuck_pg_stats(ss, rdata, format, stuckop_vec);
+    int64_t threshold;
+    cmd_getval(g_ceph_context, cmdmap, "threshold", threshold,
+	       int64_t(g_conf->mon_pg_stuck_threshold));
+
+    r = dump_stuck_pg_stats(ss, rdata, format, (int)threshold, stuckop_vec);
   } else if (prefix == "pg map") {
     pg_t pgid;
     r = -EINVAL;
@@ -1528,14 +1532,11 @@ void PGMonitor::check_full_osd_health(list<pair<health_status_t,string> >& summa
 int PGMonitor::dump_stuck_pg_stats(ostream& ss,
 				   bufferlist& rdata,
 				   string format,
+				   int threshold,
 				   vector<string>& args) const
 {
   string val;
-  int threshold = g_conf->mon_pg_stuck_threshold;
-#if 0
-  // XXX DJM
   int seconds;
-#endif
   ostringstream err;
 
   PGMap::StuckPG stuck_type;
@@ -1546,37 +1547,6 @@ int PGMonitor::dump_stuck_pg_stats(ostream& ss,
     stuck_type = PGMap::STUCK_UNCLEAN;
   if (type == "stale")
     stuck_type = PGMap::STUCK_STALE;
-
-  // XXX DJM not handled.  Need --threshold
-#if 0
-  for (std::vector<const char*>::iterator i = args.begin() + 2;
-       i != args.end(); ) {
-    } else if (ceph_argparse_withint(args, i, &seconds, &err,
-				     "-t", "--threshold", (char*)NULL)) {
-      // XXX DJM not handled
-      if (!err.str().empty()) {
-	ss << err.str();
-	return -EINVAL;
-      }
-      threshold = seconds;
-    } else if (ceph_argparse_flag(args, i, "-h", "--help", (char*)NULL)) {
-      stringstream ds;
-      ds << "Usage: ceph pg dump_stuck inactive|unclean|stale [options]" << std::endl
-	 << std::endl
-	 << "Get stats for pgs that have not been active, clean, or refreshed in some number of seconds." << std::endl
-	 << std::endl
-	 << "Options: " << std::endl
-	 << "  -h, --help                   display usage info" << std::endl
-	 << "  -f, --format [plain|json]    output format (default: plain)" << std::endl
-	 << "  -t, --threshold [seconds]    how many seconds 'stuck' is (default: 300)" << std::endl;
-      rdata.append(ds);
-      return 0;
-    } else {
-      ss << "invalid argument '" << *i << "'";
-      return -EINVAL;
-    }
-  }
-#endif
 
   utime_t now(ceph_clock_now(g_ceph_context));
   utime_t cutoff = now - utime_t(threshold, 0);

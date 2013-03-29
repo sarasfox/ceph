@@ -733,6 +733,8 @@ def parse_cmdargs(args=None, usage='', epilog='', add_help=True):
     parser.add_argument('-v', '--verbose', action="store_true")
     parser.add_argument('--concise')
     parser.add_argument('-f', '--format', choices=['json', 'json-pretty', 'xml', 'xml-pretty', 'plain'], dest='output_format')
+    # for pg dump_stuck
+    parser.add_argument('--threshold', type=int, help='number of seconds for a pg to be considered stuck for pg dump_stuck')
     # returns a Namespace with the parsed args, and a list of all extras
     return parser.parse_known_args(args)
 
@@ -926,6 +928,9 @@ def validate_command(parsed_args, sigdict, args):
 
         if parsed_args.output_format:
             valid_dict['format'] = parsed_args.output_format
+
+        if parsed_args.threshold:
+            valid_dict['threshold'] = parsed_args.threshold
 
         # XXX - could we do this in creating the vals in validate rather
         # than postprocessing?
