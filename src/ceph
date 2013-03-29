@@ -758,7 +758,7 @@ def do_command(command, d, endless=False):
 
     full_command = command + [ json.dumps(d) ]
     if verbose:
-        print >> sys.stderr, "invoking ", command
+        print >> sys.stderr, "invoking ", full_command
     p = subprocess.Popen(full_command, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
     if endless:
