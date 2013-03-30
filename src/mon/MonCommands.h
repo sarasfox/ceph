@@ -222,7 +222,7 @@ COMMAND("mds set_state " \
 	"name=gid,type=CephInt,range=0 " \
 	"name=state,type=CephInt,range=0|20", \
 	"set mds state of <gid> to <numeric-state>")
-COMMAND("mds fail name=who,type=CephName", \
+COMMAND("mds fail name=who,type=CephString", \
 	"force mds to status failed")
 COMMAND("mds rm " \
 	"name=gid,type=CephInt,range=0 " \
