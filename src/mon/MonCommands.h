@@ -163,7 +163,8 @@ COMMAND("fsid", "show cluster FSID/UUID")
 COMMAND("log name=logtext,type=CephString,n=N", \
 	"log supplied text to the monitor log")
 COMMAND("stop_cluster", "DEPRECATED")
-COMMAND("injectargs name=injected_args,type=CephString,n=N", \
+COMMAND("injectargs " \
+	"name=injected_args,type=CephString,n=N", \
 	"inject config arguments into monitor")
 COMMAND("status", "show cluster status")
 COMMAND("health name=detail,type=CephChoices,strings=detail,req=false", \
