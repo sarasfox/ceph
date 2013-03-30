@@ -313,62 +313,6 @@ int do_command(CephToolCtx *ctx,
   return r;
 }
 
-int do_command2(CephToolCtx *ctx,
-	       vector<string>& cmd, bufferlist& bl, bufferlist& rbl)
-{
-  Mutex::Locker l(ctx->lock);
-
-  pending_target = EntityName();
-  pending_cmd = cmd;
-  pending_bl = bl;
-  pending_tell = false;
-  pending_tell_pgid = false;
-  reply = false;
-  
-  if (!cmd.empty() && cmd[0] == "tell") {
-    if (cmd.size() == 1) {
-      cerr << "no tell target specified" << std::endl;
-      return -EINVAL;
-    }
-    if (!pending_target.from_str(cmd[1])) {
-      cerr << "tell target '" << cmd[1] << "' not a valid entity name" << std::endl;
-      return -EINVAL;
-    }
-    pending_cmd.erase(pending_cmd.begin(), pending_cmd.begin() + 2);
-    pending_tell = true;
-  }
-  if (!cmd.empty() && cmd[0] == "pg") {
-    if (cmd.size() == 1) {
-      cerr << "pg requires at least one argument" << std::endl;
-      return -EINVAL;
-    }
-    if (pending_target_pgid.parse(cmd[1].c_str())) {
-      pending_tell_pgid = true;
-    }
-    // otherwise, send the request on to the monitor (e.g., 'pg dump').  sigh.
-  }
-
-  send_command(ctx);
-
-  while (!reply)
-    cmd_cond.Wait(ctx->lock);
-
-  rbl = reply_bl;
-  if (!ctx->concise)
-    *ctx->log << ceph_clock_now(g_ceph_context) << " "
-	   << reply_from.name << " -> '"
-	   << reply_rs << "' (" << reply_rc << ")"
-	   << std::endl;
-  else {
-    if (reply_rc >= 0)
-      cout << reply_rs << std::endl;
-    else
-      cerr << reply_rs << std::endl;
-  }
-
-  return reply_rc;
-}
-
 void do_status(CephToolCtx *ctx, bool shutdown) {
   vector<string> cmd;
   cmd.push_back("{\"prefix\": \"status\"}");
@@ -378,55 +322,6 @@ void do_status(CephToolCtx *ctx, bool shutdown) {
 
   if (shutdown)
     messenger->shutdown();
-}
-
-static const char *cli_prompt(EditLine *e)
-{
-  return "ceph> ";
-}
-
-int ceph_tool_do_cli(CephToolCtx *ctx)
-{
-  /* emacs style */
-  EditLine *el = el_init("ceph", stdin, stdout, stderr);
-  el_set(el, EL_PROMPT, &cli_prompt);
-  el_set(el, EL_EDITOR, "emacs");
-
-  History *myhistory = history_init();
-  if (myhistory == 0) {
-    fprintf(stderr, "history could not be initialized\n");
-    return 1;
-  }
-
-  HistEvent ev;
-
-  /* Set the size of the history */
-  history(myhistory, &ev, H_SETSIZE, 800);
-
-  /* This sets up the call back functions for history functionality */
-  el_set(el, EL_HIST, history, myhistory);
-
-  while (1) {
-    int chars_read;
-    const char *line = el_gets(el, &chars_read);
-
-    //*ctx->log << "typed '" << line << "'" << std::endl;
-
-    if (chars_read == 0) {
-      *ctx->log << "quit" << std::endl;
-      break;
-    }
-
-    history(myhistory, &ev, H_ENTER, line);
-
-    if (run_command(ctx, line))
-      break;
-  }
-
-  history_end(myhistory);
-  el_end(el);
-
-  return 0;
 }
 
 int run_command(CephToolCtx *ctx, const char *line)
