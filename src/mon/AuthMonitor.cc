@@ -536,6 +536,7 @@ bool AuthMonitor::preprocess_command(MMonCommand *m)
       prefix == "auth del" ||
       prefix == "auth get-or-create" ||
       prefix == "auth get-or-create-key" ||
+      prefix == "auth import" ||
       prefix == "auth caps") {
     return false;
   }
@@ -698,9 +699,10 @@ bool AuthMonitor::prepare_command(MMonCommand *m)
     import_keyring(keyring);
     ss << "imported keyring";
     getline(ss, rs);
+    err = 0;
     wait_for_finished_proposal(new Monitor::C_Command(mon, m, 0, rs, get_version()));
     //paxos->wait_for_commit(new Monitor::C_Command(mon, m, 0, rs, get_version()));
-    return true;
+    goto done;
   } else if (prefix == "auth add") {
     KeyServerData::Incremental auth_inc;
     auth_inc.name = entity;
