@@ -14,6 +14,7 @@ import argparse
 import select
 import fcntl
 import string
+import readline
 
 verbose = False
 
@@ -1033,8 +1034,7 @@ def main():
                 return do_command(command, valid_dict, endless)
         else:
             while True:
-                print "ceph> ",
-                interactive_input = sys.stdin.readline().strip()
+                interactive_input = raw_input('ceph> ')
                 if interactive_input in ['q', 'quit', 'Q']:
                     break
                 childargs = parse_cmdargs(interactive_input.split())[1]
