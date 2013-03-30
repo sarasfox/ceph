@@ -669,7 +669,6 @@ value).
 def validate(args, signature):
     words = args[:]
     mysig = copy.deepcopy(signature)
-    argpos = 1
     d = dict()
     for desc in mysig:
         setattr(desc, 'numseen', 0)
@@ -692,14 +691,19 @@ def validate(args, signature):
                 else:
                     raise e
 
-            if desc.name in d:
-                d[desc.name] += [desc.instance.val]
+            if desc.N:
+                # value should be a list
+                if desc.name in d:
+                    d[desc.name] += [desc.instance.val]
+                else:
+                    d[desc.name] = [desc.instance.val]
+            elif (desc.t == CephPrefix) and (desc.name in d):
+                # value should be a space-joined concatenation
+                d[desc.name] += ' ' + desc.instance.val
             else:
-                d[desc.name] = [desc.instance.val]
-        argpos += 1
-    # print "validate returning", d
+                # if first CephPrefix or any other type, just set it
+                d[desc.name] = desc.instance.val
     return d
-
 
 def parse_cmdargs(args=None, usage='', epilog='', add_help=True):
     # alias: let the line-wrapping be sane
@@ -935,23 +939,6 @@ def validate_command(parsed_args, sigdict, args):
         if parsed_args.threshold:
             valid_dict['threshold'] = parsed_args.threshold
 
-        # XXX - could we do this in creating the vals in validate rather
-        # than postprocessing?
-
-        # find the arguments that can be multivalued
-        multival = [desc.name for desc in found if desc.N]
-
-        # special case: combine prefix into a single string 
-        if 'prefix' in valid_dict:
-            valid_dict['prefix'] = ' '.join(valid_dict['prefix'])
-
-        # translate any single-item lists into simple values
-        # iff they are not part of multival
-        for key, val in valid_dict.iteritems():
-            if (not key in multival) and \
-                isinstance(val, types.ListType) and \
-                (len(val) == 1):
-                valid_dict[key] = val[0]
         return valid_dict
 
 def main():
