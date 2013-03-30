@@ -2572,16 +2572,18 @@ void Monitor::handle_command(MMonCommand *m)
       rs = "access denied";
       goto out;
     }
-    string injected_args;
+    vector<string> injected_args;
     cmd_getval(g_ceph_context, cmdmap, "injected_args", injected_args);
     if (!injected_args.empty()) {
       dout(0) << "parsing injected options '" << injected_args << "'" << dendl;
+      ostringstream argss;
+      std::copy(injected_args.begin(), injected_args.end(),
+		ostream_iterator<string>(argss, " "));
       ostringstream oss;
-      g_conf->injectargs(injected_args, &oss);
-      derr << "injectargs:" << dendl;
-      derr << oss.str() << dendl;
-      rs = "parsed options";
-      r = 0;
+      r = g_conf->injectargs(argss.str().c_str(), &oss);
+      ss << "injectargs:"  << oss.str();
+      rs = ss.str();
+      goto out;
     } else {
       rs = "must supply options to be parsed in a single string";
       r = -EINVAL;
