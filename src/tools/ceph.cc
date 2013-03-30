@@ -204,7 +204,7 @@ static int get_indata(const char *in_file, bufferlist &indata)
   }
 
   TEMP_FAILURE_RETRY(::close(fd));
-  derr << "read " << st.st_size << " bytes from " << in_file << dendl;
+  generic_dout(5) << "read " << st.st_size << " bytes from " << in_file << dendl;
   return 0;
 }
 
