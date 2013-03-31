@@ -2546,10 +2546,11 @@ void Monitor::handle_command(MMonCommand *m)
       rs = "access denied";
       goto out;
     }
-    string logtext;
+    vector<string> logtext;
     cmd_getval(g_ceph_context, cmdmap, "logtext", logtext);
     stringstream ss;
-    ss << logtext;
+    std::copy(logtext.begin(), logtext.end(),
+	      ostream_iterator<string>(ss, " "));
     clog.info(ss);
     rs = "ok";
     reply_command(m, 0, rs, rdata, 0);
