@@ -1937,7 +1937,7 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
       goto out;
     }
     string format;
-    cmd_getval(g_ceph_context, cmdmap, "format", format, string("plain"));
+    cmd_getval(g_ceph_context, cmdmap, "format", format, string("json-pretty"));
     boost::scoped_ptr<Formatter> f(new_formatter(format));
 
     f->open_object_section("osd_location");
