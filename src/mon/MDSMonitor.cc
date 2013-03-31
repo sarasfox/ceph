@@ -820,9 +820,10 @@ bool MDSMonitor::prepare_command(MMonCommand *m)
   } else if (prefix == "mds setmap") {
     MDSMap map;
     map.decode(m->get_data());
+    epoch_t e = 0;
     int64_t epochnum;
-    cmd_getval(g_ceph_context, cmdmap, "epoch", epochnum);
-    epoch_t e = epochnum;
+    if (cmd_getval(g_ceph_context, cmdmap, "epoch", epochnum))
+      e = epochnum;
 
     if (pending_mdsmap.epoch == e) {
       map.epoch = pending_mdsmap.epoch;  // make sure epoch is correct
