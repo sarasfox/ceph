@@ -1019,6 +1019,8 @@ def main():
             valid_dict = validate_command(parsed_args, sigdict, childargs)
             if valid_dict:
                 return do_command(command, valid_dict, endless)
+            else:
+                return 1
         else:
             while True:
                 interactive_input = raw_input('ceph> ')
