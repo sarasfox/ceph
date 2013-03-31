@@ -970,7 +970,7 @@ def main():
     # of the form 'cmdNNN' followed by an array of argument descriptors)
     # as part of the validated argument JSON object
 
-    sigdata = get_process_output(command + ['get_command_descriptions']).strip()
+    sigdata = get_process_output(command + ['{"prefix":"get_command_descriptions"}']).strip()
     sigdict = parse_json_funcsig(sigdata)
 
     parsed_args, childargs = parse_cmdargs(epilog='\nAvailable commands: \n\n'

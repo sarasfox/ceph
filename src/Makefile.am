@@ -104,7 +104,8 @@ ceph_mds_CXXFLAGS = ${AM_CXXFLAGS}
 cephbin_SOURCES = \
 	tools/ceph.cc \
 	tools/common.cc \
-	mon/PGMap.cc
+	mon/PGMap.cc \
+	common/cmdparse.cc
 cephbin_LDADD = $(LIBGLOBAL_LDA) $(LIBEDIT_LIBS) libosdc.la
 cephbin_CXXFLAGS = ${AM_CXXFLAGS}
 

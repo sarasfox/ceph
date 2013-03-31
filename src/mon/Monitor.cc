@@ -2440,7 +2440,28 @@ void Monitor::handle_command(MMonCommand *m)
     return;
   }
 
-  if (m->cmd[0] == "get_command_descriptions") {
+  string prefix;
+  vector<string> prefix_vec;
+  map<string, cmd_vartype> cmdmap;
+  stringstream ss;
+  bufferlist rdata;
+  string rs;
+  int r = -EINVAL;
+  rs = "unrecognized command";
+
+  if (!cmdmap_from_json(m->cmd, &cmdmap, ss)) {
+    // ss has reason for failure
+    r = -EINVAL;
+    rs = ss.str();
+    if (!m->get_source().is_mon())  // don't reply to mon->mon commands
+      reply_command(m, r, rs, 0);
+    else
+      m->put();
+    return;
+  }
+
+  cmd_getval(g_ceph_context, cmdmap, "prefix", prefix);
+  if (prefix == "get_command_descriptions") {
     int cmdnum = 0;
     JSONFormatter *f = new JSONFormatter();
     f->open_object_section("command_descriptions");
@@ -2464,8 +2485,6 @@ void Monitor::handle_command(MMonCommand *m)
     f->flush(ds);
     delete f;
     rdata.append(ds);
-    //ss << "dumped command descriptions";
-    //reply_command(m, 0, ss.str(), rdata, 0);
     reply_command(m, 0, "", rdata, 0);
     return;
   }
@@ -2474,36 +2493,17 @@ void Monitor::handle_command(MMonCommand *m)
   bool access_r;
   bool access_all;
 
-  string prefix;
-  vector<string> prefix_vec;
   string module;
   string err;
-  map<string, cmd_vartype> cmdmap;
-  stringstream ss;
 
   dout(0) << "handle_command " << *m << dendl;
-  bufferlist rdata;
-  string rs;
-  int r = -EINVAL;
-  rs = "unrecognized command";
-
-  if (!cmdmap_from_json(m->cmd, &cmdmap, ss)) {
-    // ss has reason for failure
-    r = -EINVAL;
-    rs = ss.str();
-    if (!m->get_source().is_mon())  // don't reply to mon->mon commands
-      reply_command(m, r, rs, 0);
-    else
-      m->put();
-  }
 
   string format;
   cmd_getval(g_ceph_context, cmdmap, "format", format, string("plain"));
   boost::scoped_ptr<Formatter> f(new_formatter(format));
-
-  cmd_getval(g_ceph_context, cmdmap, "prefix", prefix);
   get_str_vec(prefix, prefix_vec);
   module = prefix_vec[0];
+
   access_cmd = _allowed_command(session, prefix_vec);
 
   access_r = (session->caps.check_privileges(PAXOS_MONMAP, MON_CAP_R) ||

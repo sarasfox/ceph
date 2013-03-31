@@ -46,7 +46,7 @@ extern "C" {
 #include "common/Mutex.h"
 #include "common/Timer.h"
 #include "global/global_init.h"
-
+#include "common/cmdparse.h"
 
 #include "include/assert.h"
 
@@ -269,33 +269,41 @@ int do_command(CephToolCtx *ctx,
   string rs;
 
   bool mon = true;
-  if (cmd.size() > 0 && cmd[0] == "tell") {
-    if (cmd.size() == 1) {
-      cerr << "no tell target specified" << std::endl;
-      return -EINVAL;
-    }
-    if (!pending_target.from_str(cmd[1])) {
-      cerr << "tell target '" << cmd[1] << "' not a valid entity name" << std::endl;
+  string prefix;
+  vector<string> prefix_vec;
+  map<string, cmd_vartype> cmdmap;
+
+  stringstream ss;
+  if (!cmdmap_from_json(cmd, &cmdmap, ss)) {
+    cerr << "error parsing command:" << ss.str() << std::endl;
+    return -EINVAL;
+  }
+
+  cmd_getval(ctx->cct, cmdmap, "prefix", prefix);
+  if (prefix == "tell") {
+    string target;
+    cmd_getval(ctx->cct, cmdmap, "target", target);
+    if (!pending_target.from_str(target)) {
+      cerr << "tell target '" << target << "' not a valid entity name" << std::endl;
       return -EINVAL;
     }
 
     if (pending_target.get_type() == (int)entity_name_t::TYPE_OSD) {
-      cmd.erase(cmd.begin(), cmd.begin() + 2);
+      vector<string> args;
+      cmd_getval(ctx->cct, cmdmap, "args", args);
       const char *start = pending_target.get_id().c_str();
       char *end;
       int n = strtoll(start, &end, 10);
-      objecter->osd_command(n, cmd, bl, &rbl, &rs, onfinish);
+      objecter->osd_command(n, args, bl, &rbl, &rs, onfinish);
       mon = false;
     }
-  }
-  else if (cmd.size() > 0 && cmd[0] == "pg") {
-    if (cmd.size() == 1) {
-      cerr << "pg requires at least one argument" << std::endl;
-      return -EINVAL;
-    }
-    if (pending_target_pgid.parse(cmd[1].c_str())) {
-      //cmd.erase(cmd.begin(), cmd.begin() + 2);
-      objecter->pg_command(pending_target_pgid, cmd, bl, &rbl, &rs, onfinish);
+  } else if (prefix == "pg") {
+    string pgidstr;
+    cmd_getval(ctx->cct, cmdmap, "pgid", pgidstr);
+    if (pending_target_pgid.parse(pgidstr.c_str())) {
+      vector<string> args;
+      cmd_getval(ctx->cct, cmdmap, "args", args);
+      objecter->pg_command(pending_target_pgid, args, bl, &rbl, &rs, onfinish);
       mon = false;
     }
     // otherwise, send the request on to the monitor (e.g., 'pg dump').  sigh.
