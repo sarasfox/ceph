@@ -106,7 +106,7 @@ COMMAND("pg dump_json " \
 	"show human-readable version of pg map in json only")
 COMMAND("pg dump_pools_json", "show pg pools info in json only")
 COMMAND("pg dump_stuck " \
-	"name=stuckops,type=CephChoices,strings=inactive|unclean|stale,name=stuckops,req=false " \
+	"name=stuckops,type=CephChoices,strings=inactive|unclean|stale,req=false " \
 	"name=threshold,type=CephInt,req=false",
 	"show information about stuck pgs [--threshold=seconds to consider stuck]")
 COMMAND("pg map name=pgid,type=CephPgid", "show mapping of pg to osds")
@@ -188,8 +188,9 @@ COMMAND("tell " \
 	"name=target,type=CephName " \
 	"name=args,type=CephString,n=N", \
 	"send a command to a specific daemon")
-COMMAND("pg name=pgid,type=CephPgid", \
-	"send a command to a specific daemon")
+COMMAND("pg name=pgid,type=CephPgid " \
+	"name=args,type=CephString,n=N", \
+	"send a command to a specific pg")
 
 /*
  * MDS commands (MDSMonitor.cc)
@@ -214,7 +215,7 @@ COMMAND("mds set_max_mds " \
 	"set max MDS index")
 COMMAND("mds setmap " \
 	"name=epoch,type=CephInt,range=0", \
-	"set mds map for <epoch> to input file")
+	"set mds map; must supply correct epoch number")
 // arbitrary limit 0-20 below; worth standing on head to make it
 // relate to actual state definitions?
 // #include "include/ceph_fs.h"
@@ -309,7 +310,7 @@ COMMAND("osd repair " \
 	"name=who,type=CephString", \
 	"initiate repair on osd <who>")
 COMMAND("osd lspools " \
-	"name=auid,type=CephInt,name=auid", \
+	"name=auid,type=CephInt,req=false", \
 	"list pools")
 COMMAND("osd blacklist ls", "show blacklisted clients")
 COMMAND("osd crush rule list", "list crush rules")
@@ -378,7 +379,7 @@ COMMAND("osd setmaxosd " \
 COMMAND("osd pause", "pause osd")
 COMMAND("osd unpause", "unpause osd")
 COMMAND("osd set " \
-	"name=key,type=CephChoices,name=key,strings=pause|noup|nodown|noout|noin|nobackfile|norecover", \
+	"name=key,type=CephChoices,strings=pause|noup|nodown|noout|noin|nobackfile|norecover", \
 	"set <key>")
 COMMAND("osd unset " \
 	"name=key,type=CephChoices,strings=pause|noup|nodown|noout|noin|nobackfile|norecover", \
@@ -410,13 +411,13 @@ COMMAND("osd create " \
 COMMAND("osd blacklist " \
 	"name=blacklistop,type=CephChoices,strings=add|rm " \
 	"name=addr,type=CephEntityAddr " \
-	"name=expire,type=CephFloat,name=expire,range=0.0,req=false", \
+	"name=expire,type=CephFloat,range=0.0,req=false", \
 	"add (optionally until <expire> seconds from now) or remove <addr> from blacklist")
 COMMAND("osd pool mksnap " \
 	"name=pool,type=CephPoolname " \
 	"name=snap,type=CephString", \
 	"make snapshot <snap> in <pool>")
-COMMAND("osd pool mksnap " \
+COMMAND("osd pool rmsnap " \
 	"name=pool,type=CephPoolname " \
 	"name=snap,type=CephString", \
 	"remove snapshot <snap> from <pool>")
