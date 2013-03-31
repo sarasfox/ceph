@@ -1982,6 +1982,9 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
 	      prefix == "osd repair")) {
     string whostr;
     cmd_getval(g_ceph_context, cmdmap, "who", whostr);
+    vector<string> pvec;
+    get_str_vec(prefix, pvec);
+
     if (whostr == "*") {
       ss << "osds ";
       int c = 0;
@@ -1989,8 +1992,8 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
 	if (osdmap.is_up(i)) {
 	  ss << (c++ ? "," : "") << i;
 	  mon->try_send_message(new MOSDScrub(osdmap.get_fsid(),
-					      prefix == "osd repair",
-					      prefix == "osd deep-scrub"),
+					      pvec.back() == "repair",
+					      pvec.back() == "deep-scrub"),
 				osdmap.get_inst(i));
 	}
       r = 0;
@@ -2001,11 +2004,11 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
 	r = -EINVAL;
       } else if (osdmap.is_up(osd)) {
 	mon->try_send_message(new MOSDScrub(osdmap.get_fsid(),
-					    prefix == "osd repair",
-					    prefix == "osd deep-scrub"),
+					    pvec.back() == "repair",
+					    pvec.back() == "deep-scrub"),
 			      osdmap.get_inst(osd));
 	r = 0;
-	ss << "osd." << osd << " instructed to " << whostr;
+	ss << "osd." << osd << " instructed to " << pvec.back();
       } else {
 	ss << "osd." << osd << " is not up";
       }
