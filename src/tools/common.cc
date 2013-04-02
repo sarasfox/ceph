@@ -39,12 +39,14 @@ extern "C" {
 #include "msg/SimpleMessenger.h"
 #include "tools/common.h"
 
+#include "osdc/Objecter.h"
+
 #include "common/errno.h"
 #include "common/Cond.h"
 #include "common/Mutex.h"
 #include "common/Timer.h"
 #include "global/global_init.h"
-
+#include "common/cmdparse.h"
 
 #include "include/assert.h"
 
@@ -73,6 +75,8 @@ bufferlist reply_bl;
 entity_inst_t reply_from;
 
 OSDMap *osdmap = 0;
+OSDMap static_osdmap;
+Objecter *objecter = 0;
 
 Connection *command_con = NULL;
 Context *tick_event = 0;
@@ -251,117 +255,84 @@ static void handle_ack(CephToolCtx *ctx, MCommandReply *ack)
 int do_command(CephToolCtx *ctx,
 	       vector<string>& cmd, bufferlist& bl, bufferlist& rbl)
 {
+  objecter = new Objecter(ctx->cct, messenger, &ctx->mc, &static_osdmap, ctx->lock, ctx->timer);
+  objecter->init_unlocked();
   Mutex::Locker l(ctx->lock);
+  objecter->init_locked();
 
-  pending_target = EntityName();
-  pending_cmd = cmd;
-  pending_bl = bl;
-  pending_tell = false;
-  pending_tell_pgid = false;
-  reply = false;
-  
-  if (!cmd.empty() && cmd[0] == "tell") {
-    if (cmd.size() == 1) {
-      cerr << "no tell target specified" << std::endl;
-      return -EINVAL;
-    }
-    if (!pending_target.from_str(cmd[1])) {
-      cerr << "tell target '" << cmd[1] << "' not a valid entity name" << std::endl;
-      return -EINVAL;
-    }
-    pending_cmd.erase(pending_cmd.begin(), pending_cmd.begin() + 2);
-    pending_tell = true;
+  Cond my_cond;
+  Mutex my_lock("cephtool::my_lock");
+  int r = 0;
+  bool done;
+  C_SafeCond *onfinish = new C_SafeCond(&my_lock, &my_cond, &done, &r);
+
+  string rs;
+
+  bool mon = true;
+  string prefix;
+  vector<string> prefix_vec;
+  map<string, cmd_vartype> cmdmap;
+
+  stringstream ss;
+  if (!cmdmap_from_json(cmd, &cmdmap, ss)) {
+    cerr << "error parsing command:" << ss.str() << std::endl;
+    return -EINVAL;
   }
-  if (!cmd.empty() && cmd[0] == "pg") {
-    if (cmd.size() == 1) {
-      cerr << "pg requires at least one argument" << std::endl;
+
+  cmd_getval(ctx->cct, cmdmap, "prefix", prefix);
+  if (prefix == "tell") {
+    string target;
+    cmd_getval(ctx->cct, cmdmap, "target", target);
+    if (!pending_target.from_str(target)) {
+      cerr << "tell target '" << target << "' not a valid entity name" << std::endl;
       return -EINVAL;
     }
-    if (pending_target_pgid.parse(cmd[1].c_str())) {
-      pending_tell_pgid = true;
+
+    if (pending_target.get_type() == (int)entity_name_t::TYPE_OSD) {
+      vector<string> args;
+      cmd_getval(ctx->cct, cmdmap, "args", args);
+      const char *start = pending_target.get_id().c_str();
+      char *end;
+      int n = strtoll(start, &end, 10);
+      objecter->osd_command(n, args, bl, &rbl, &rs, onfinish);
+      mon = false;
+    }
+  } else if (prefix == "pg") {
+    string pgidstr;
+    cmd_getval(ctx->cct, cmdmap, "pgid", pgidstr);
+    if (pending_target_pgid.parse(pgidstr.c_str())) {
+      vector<string> args;
+      cmd_getval(ctx->cct, cmdmap, "args", args);
+      // rebuild the original command
+      args.insert(args.begin(), pgidstr);
+      args.insert(args.begin(), "pg");
+      objecter->pg_command(pending_target_pgid, args, bl, &rbl, &rs, onfinish);
+      mon = false;
     }
     // otherwise, send the request on to the monitor (e.g., 'pg dump').  sigh.
   }
-
-  send_command(ctx);
-
-  while (!reply)
-    cmd_cond.Wait(ctx->lock);
-
-  rbl = reply_bl;
-  if (!ctx->concise)
-    *ctx->log << ceph_clock_now(g_ceph_context) << " "
-	   << reply_from.name << " -> '"
-	   << reply_rs << "' (" << reply_rc << ")"
-	   << std::endl;
-  else {
-    if (reply_rc >= 0)
-      cout << reply_rs << std::endl;
-    else
-      cerr << reply_rs << std::endl;
+  if (mon) {
+    ctx->mc.start_mon_command(cmd, bl, &rbl, &rs, onfinish);
   }
 
-  return reply_rc;
+  my_lock.Lock();
+  while (!done)
+    my_cond.Wait(my_lock);
+  my_lock.Unlock();
+
+  cout << rs << std::endl;
+  return r;
 }
 
 void do_status(CephToolCtx *ctx, bool shutdown) {
   vector<string> cmd;
-  cmd.push_back("status");
+  cmd.push_back("{\"prefix\": \"status\"}");
   bufferlist bl;
 
   do_command(ctx, cmd, bl, bl);
 
   if (shutdown)
     messenger->shutdown();
-}
-
-static const char *cli_prompt(EditLine *e)
-{
-  return "ceph> ";
-}
-
-int ceph_tool_do_cli(CephToolCtx *ctx)
-{
-  /* emacs style */
-  EditLine *el = el_init("ceph", stdin, stdout, stderr);
-  el_set(el, EL_PROMPT, &cli_prompt);
-  el_set(el, EL_EDITOR, "emacs");
-
-  History *myhistory = history_init();
-  if (myhistory == 0) {
-    fprintf(stderr, "history could not be initialized\n");
-    return 1;
-  }
-
-  HistEvent ev;
-
-  /* Set the size of the history */
-  history(myhistory, &ev, H_SETSIZE, 800);
-
-  /* This sets up the call back functions for history functionality */
-  el_set(el, EL_HIST, history, myhistory);
-
-  while (1) {
-    int chars_read;
-    const char *line = el_gets(el, &chars_read);
-
-    //*ctx->log << "typed '" << line << "'" << std::endl;
-
-    if (chars_read == 0) {
-      *ctx->log << "quit" << std::endl;
-      break;
-    }
-
-    history(myhistory, &ev, H_ENTER, line);
-
-    if (run_command(ctx, line))
-      break;
-  }
-
-  history_end(myhistory);
-  el_end(el);
-
-  return 0;
 }
 
 int run_command(CephToolCtx *ctx, const char *line)
@@ -557,13 +528,15 @@ bool Admin::ms_dispatch(Message *m) {
     handle_ack(ctx, (MMonCommandAck*)m);
     break;
   case MSG_COMMAND_REPLY:
-    handle_ack(ctx, (MCommandReply*)m);
+    //handle_ack(ctx, (MCommandReply*)m);
+    objecter->handle_command_reply((MCommandReply*)m);
     break;
   case CEPH_MSG_MON_MAP:
     m->put();
     break;
   case CEPH_MSG_OSD_MAP:
-    handle_osd_map(ctx, (MOSDMap *)m);
+    //handle_osd_map(ctx, (MOSDMap *)m);
+    objecter->handle_osd_map((MOSDMap*)m);
     break;
   case MSG_LOG:
    {
