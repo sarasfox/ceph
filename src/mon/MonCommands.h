@@ -102,7 +102,7 @@ COMMAND("pg dump " \
 	"name=dumpcontents,type=CephChoices,strings=all|summary|sum|pools|osds|pgs,n=N,req=false", \
 	"show human-readable versions of pg map")
 COMMAND("pg dump_json " \
-	"name=dumpcontents,type=CephChoices,strings=all|summary|sum|pools|osds|pgs,n=N", \
+	"name=dumpcontents,type=CephChoices,strings=all|summary|sum|pools|osds|pgs,n=N,req=false", \
 	"show human-readable version of pg map in json only")
 COMMAND("pg dump_pools_json", "show pg pools info in json only")
 COMMAND("pg dump_stuck " \
