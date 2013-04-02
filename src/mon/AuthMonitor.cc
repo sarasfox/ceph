@@ -702,7 +702,7 @@ bool AuthMonitor::prepare_command(MMonCommand *m)
     err = 0;
     wait_for_finished_proposal(new Monitor::C_Command(mon, m, 0, rs, get_version()));
     //paxos->wait_for_commit(new Monitor::C_Command(mon, m, 0, rs, get_version()));
-    goto done;
+    return true;
   } else if (prefix == "auth add") {
     KeyServerData::Incremental auth_inc;
     auth_inc.name = entity;
