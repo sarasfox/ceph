@@ -303,6 +303,9 @@ int do_command(CephToolCtx *ctx,
     if (pending_target_pgid.parse(pgidstr.c_str())) {
       vector<string> args;
       cmd_getval(ctx->cct, cmdmap, "args", args);
+      // rebuild the original command
+      args.insert(args.begin(), pgidstr);
+      args.insert(args.begin(), "pg");
       objecter->pg_command(pending_target_pgid, args, bl, &rbl, &rs, onfinish);
       mon = false;
     }
