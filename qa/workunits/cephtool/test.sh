@@ -35,14 +35,10 @@ ceph auth caps client.xx osd "allow rw"
 ceph auth get client.xx | grep osd | grep "allow rw"
 ceph auth export | grep client.xx
 ceph auth export -o authfile
-rm authfile
-#XXX import is broken in current source, and when I fix the first problem
-# (getting it past preprocess_command) I end up some time later in a 
-# mutex assert.  #4599
-#ceph auth import -i authfile
-#ceph auth export -o authfile2
-#diff authfile authfile2
-#rm authfile authfile2
+ceph auth import -i authfile
+ceph auth export -o authfile2
+diff authfile authfile2
+rm authfile authfile2
 ceph auth del client.xx
 
 # df
@@ -63,7 +59,7 @@ ceph injectargs --debug_ms=1
 ceph injectargs --debug-ms=1
 ! ceph injectargs debug_ms=1
 mymsg="this is a test log message $$.$(date)"
-ceph log $mymsg
+ceph log "$mymsg"
 logfile=$(ceph-conf --name=mon.a --lookup log_file)
 grep "$mymsg" $logfile
 ceph mds cluster_down 2>&1 | grep "marked mdsmap DOWN"
@@ -104,7 +100,8 @@ ceph mds stat
 
 # no mon add/remove
 ceph mon dump
-ceph mon getmap
+ceph mon getmap -o /tmp/monmap
+[ -s /tmp/monmap ]
 # ceph mon tell
 ceph mon_status
 
@@ -216,6 +213,8 @@ ceph sync status | grep paxos_version
 ceph tell osd.0 version
 ! ceph tell osd.9999 version 
 ! ceph tell osd.foo version
+
+ceph tell osd.0 dump_pg_recovery_stats | grep Started
 
 ceph osd reweight 0 0.9
 ! ceph osd reweight 0 -1
