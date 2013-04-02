@@ -142,7 +142,7 @@ COMMAND("auth add " \
 	"add auth info for <name> from input file, or random key if no input given, and/or any caps specified in the command")
 COMMAND("auth get-or-create-key " \
 	"name=entity,type=CephName " \
-	"type=CephString,name=caps,n=N,req=false", \
+	"name=caps,type=CephString,n=N,req=false", \
 	"get, or add, key for <name> from system/caps pairs specified in the command.  If key already exists, any given caps must match the existing caps for that key.")
 COMMAND("auth get-or-create " \
 	"name=entity,type=CephName " \
