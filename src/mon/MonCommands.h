@@ -445,6 +445,14 @@ COMMAND("osd pool set " \
 	"name=val,type=CephInt " \
 	"name=sure,type=CephChoices,strings=--allow-experimental-feature,req=false", \
 	"set pool parameter <var> to <val>")
+// 'val' is a CephString because it can include a unit.  Perhaps
+// there should be a Python type for validation/conversion of strings
+// with units.
+COMMAND("osd pool set-quota " \
+	"name=pool,type=CephPoolname " \
+	"name=field,type=CephChoices,strings=max_objects|max_bytes " \
+	"name=val,type=CephString",
+	"set object or byte limit on pool")
 COMMAND("osd reweight-by-utilization " \
 	"name=oload,type=CephInt,range=100,req=false", \
 	"reweight OSDs by utilization [overload-percentage-for-consideration, default 120]")

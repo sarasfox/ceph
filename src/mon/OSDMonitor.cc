@@ -3276,7 +3276,7 @@ done:
       wait_for_finished_proposal(new Monitor::C_Command(mon, m, 0, rs, get_version()));
       return true;
     }
-  } else if (prefix == "set-quota") {
+  } else if (prefix == "osd pool set-quota") {
     string poolstr;
     cmd_getval(g_ceph_context, cmdmap, "pool", poolstr);
     int64_t pool_id = osdmap.lookup_pg_pool_name(poolstr);
@@ -3297,6 +3297,7 @@ done:
     // val could contain unit designations, so we treat as a string
     string val;
     cmd_getval(g_ceph_context, cmdmap, "val", val);
+    stringstream tss;
     int64_t value = unit_to_bytesize(val, &tss);
     if (value < 0) {
       ss << "error parsing value '" << value << "': " << tss.str();
