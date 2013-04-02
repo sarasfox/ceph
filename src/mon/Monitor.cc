@@ -2536,7 +2536,7 @@ void Monitor::handle_command(MMonCommand *m)
     return;
   }
 
-  if (prefix == "config-key") {
+  if (module == "config-key") {
     if (!access_all) {
       r = -EACCES;
       rs = "access denied";

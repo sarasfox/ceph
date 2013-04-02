@@ -459,3 +459,22 @@ COMMAND("osd reweight-by-utilization " \
 COMMAND("osd thrash " \
 	"name=num_epochs,type=CephInt,range=0", \
 	"thrash OSDs for <num_epochs>")
+
+/*
+ * mon/ConfigKeyService.cc
+ */
+
+COMMAND("config-key get " \
+	"name=key,type=CephString", \
+	"get <key>")
+COMMAND("config-key put " \
+	"name=key,type=CephString " \
+	"name=val,type=CephString,req=false", \
+	"put <key>, value <val>")
+COMMAND("config-key del " \
+	"name=key,type=CephString", \
+	"delete <key>")
+COMMAND("config-key exists " \
+	"name=key,type=CephString", \
+	"check for <key>'s existence")
+COMMAND("config-key list ", "list keys")
