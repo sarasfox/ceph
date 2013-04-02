@@ -1536,7 +1536,6 @@ int PGMonitor::dump_stuck_pg_stats(ostream& ss,
 				   vector<string>& args) const
 {
   string val;
-  int seconds;
   ostringstream err;
 
   PGMap::StuckPG stuck_type;
