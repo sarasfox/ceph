@@ -787,8 +787,8 @@ def do_command(command, d, endless=False):
     else:
         outdata, errdata = p.communicate()
         if len(errdata):
-            print >> sys.stderr, errdata
-        print outdata
+            sys.stderr.write(errdata)
+        sys.stdout.write(outdata)
     return p.returncode
 
 """
