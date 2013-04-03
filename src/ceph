@@ -719,6 +719,8 @@ def parse_cmdargs(args=None, usage='', epilog='', add_help=True):
                         help='input file')
     parser.add_argument('--id', dest='client_id',
                         help='client id for authentication')
+    parser.add_argument('--name', dest='client_name',
+                        help='client name for authentication')
     parser.add_argument('-o', '--out-file', dest='output_file',
                         help='output file')
     parser.add_argument('-k', '--keyring', dest='keyring_file',
@@ -957,9 +959,11 @@ def main():
     global verbose
     verbose = parsed_args.verbose
 
-    # pass on --id, -k, -c
+    # pass on --id, --name, -k, -c
     if parsed_args.client_id:
         command.extend(['--id', parsed_args.client_id])
+    if parsed_args.client_name:
+        command.extend(['--name', parsed_args.client_name])
     if parsed_args.keyring_file:
         command.extend(['-k', parsed_args.keyring_file])
     if parsed_args.cephconf:
