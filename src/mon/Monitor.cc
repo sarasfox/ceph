@@ -2789,6 +2789,9 @@ void Monitor::handle_command(MMonCommand *m)
       rs = "started responding to quorum, initiated new election";
       r = 0;
     }
+  } else if (!access_cmd) {
+    r = -EACCES;
+    rs = "access denied";
   }
 
  out:
