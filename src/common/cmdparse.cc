@@ -13,6 +13,7 @@
  */
 
 #include "common/cmdparse.h"
+#include "include/str_list.h"
 #include "json_spirit/json_spirit.h"
 
 // Parse JSON in vector cmd into a map from field to map of values
@@ -96,4 +97,38 @@ cmdmap_from_json(vector<string> cmd, map<string, cmd_vartype> *mapp, stringstrea
     ss << e.what();
     return false;
   }
+}
+
+/*
+ * Rebuild the full command from prefix and selected fields.  This is
+ * done for the few uses of 'allow command' that have to be validated
+ * here in the monitor.
+ *
+ * This is what we like to refer to as a "disgusting hack".
+ */
+
+void
+build_fullcmd(string &prefix, map<string, cmd_vartype>&cmdmap,
+	      vector<string> *fullcmd)
+{
+  get_str_vec(prefix, *fullcmd);
+
+  string s;
+  int64_t i;
+  vector<string> caps;
+
+  if (prefix == "osd create") {
+    cmd_getval(g_ceph_context, cmdmap, "uuid", s);
+    fullcmd->push_back(s);
+  } else if (prefix == "osd crush set") {
+    cmd_getval(g_ceph_context, cmdmap, "id", i);
+    stringstream ss;
+    ss << i;
+    fullcmd->push_back(ss.str());
+  } else if (prefix == "auth add" || prefix == "auth get-or-create") {
+    cmd_getval(g_ceph_context, cmdmap, "entity", s);
+    fullcmd->push_back(s);
+    cmd_getval(g_ceph_context, cmdmap, "caps", caps);
+    fullcmd->insert(fullcmd->end(), caps.begin(), caps.end());
+  } 
 }

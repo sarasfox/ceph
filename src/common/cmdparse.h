@@ -10,7 +10,10 @@
 
 typedef boost::variant<std::string, bool, int64_t, double, std::vector<std::string> > cmd_vartype;
 
-bool cmdmap_from_json(std::vector<std::string> cmd, std::map<std::string, cmd_vartype> *mapp, std::stringstream &ss);
+bool cmdmap_from_json(std::vector<std::string> cmd, std::map<std::string,
+		      cmd_vartype> *mapp, std::stringstream &ss);
+void build_fullcmd(string &prefix, map<string, cmd_vartype>&cmdmap,
+		   vector<string> *fullcmd);
 
 template <typename T>
 bool

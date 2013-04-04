@@ -2445,7 +2445,7 @@ void Monitor::handle_command(MMonCommand *m)
   }
 
   string prefix;
-  vector<string> prefix_vec;
+  vector<string> fullcmd;
   map<string, cmd_vartype> cmdmap;
   stringstream ss;
   bufferlist rdata;
@@ -2505,10 +2505,10 @@ void Monitor::handle_command(MMonCommand *m)
   string format;
   cmd_getval(g_ceph_context, cmdmap, "format", format, string("plain"));
   boost::scoped_ptr<Formatter> f(new_formatter(format));
-  get_str_vec(prefix, prefix_vec);
-  module = prefix_vec[0];
+  build_fullcmd(prefix, cmdmap, &fullcmd);
+  module = fullcmd[0];
 
-  access_cmd = _allowed_command(session, prefix_vec);
+  access_cmd = _allowed_command(session, fullcmd);
 
   access_r = (session->caps.check_privileges(PAXOS_MONMAP, MON_CAP_R) ||
 		   access_cmd);

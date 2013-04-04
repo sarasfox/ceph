@@ -1789,14 +1789,14 @@ bool OSDMonitor::preprocess_command(MMonCommand *m)
 
   string prefix;
   cmd_getval(g_ceph_context, cmdmap, "prefix", prefix);
-  vector<string> prefix_vec;
-  get_str_vec(prefix, prefix_vec);
+  vector<string> fullcmd;
+  build_fullcmd(prefix, cmdmap, &fullcmd);
 
   MonSession *session = m->get_session();
   if (!session ||
       (!session->caps.get_allow_all() &&
        !session->caps.check_privileges(PAXOS_OSDMAP, MON_CAP_R) &&
-       !mon->_allowed_command(session, prefix_vec))) {
+       !mon->_allowed_command(session, fullcmd))) {
     mon->reply_command(m, -EACCES, "access denied", rdata, get_version());
     return true;
   }
@@ -2367,14 +2367,14 @@ bool OSDMonitor::prepare_command(MMonCommand *m)
 
   string prefix;
   cmd_getval(g_ceph_context, cmdmap, "prefix", prefix);
-  vector<string> prefix_vec;
-  get_str_vec(prefix, prefix_vec);
+  vector<string> fullcmd;
+  build_fullcmd(prefix, cmdmap, &fullcmd);
 
   MonSession *session = m->get_session();
   if (!session ||
       (!session->caps.get_allow_all() &&
        !session->caps.check_privileges(PAXOS_OSDMAP, MON_CAP_W) &&
-       !mon->_allowed_command(session, prefix_vec))) {
+       !mon->_allowed_command(session, fullcmd))) {
     mon->reply_command(m, -EACCES, "access denied", get_version());
     return true;
   }
