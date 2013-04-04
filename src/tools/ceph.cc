@@ -205,7 +205,7 @@ static int get_indata(const char *in_file, bufferlist &indata)
   }
 
   TEMP_FAILURE_RETRY(::close(fd));
-  derr << "read " << st.st_size << " bytes from " << in_file << dendl;
+  generic_dout(5) << "read " << st.st_size << " bytes from " << in_file << dendl;
   return 0;
 }
 
@@ -328,8 +328,8 @@ int main(int argc, const char **argv)
 
     case CEPH_TOOL_MODE_CLI_INPUT: {
       if (args.empty()) {
-	if (ceph_tool_do_cli(ctx))
-	  ret = 1;
+	cerr << "cli mode not handled here" << std::endl;
+	ret = 1;
       } else {
 	while (!args.empty()) {
 	  vector<string> cmd;
