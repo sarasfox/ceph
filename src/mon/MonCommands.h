@@ -64,17 +64,18 @@
  * Example:
  *
  * COMMAND("auth add " \
- *   	   "name=entity,type=CephName " \
+ *   	   "name=entity,type=CephString " \
  *   	   "name=caps,type=CephString,n=N,req=false", \
  *   	   "add auth info for <name> from input file, or random key " \
  *   	   "if no input given, and/or any caps specified in the command")
  *
  * defines a command "auth add" that takes a required argument "entity"
- * of type "CephName", and from 1 to N arguments named "caps" of type
+ * of type "CephString", and from 1 to N arguments named "caps" of type
  * CephString, at least one of which is required.  The front end will
  * validate user input against this description.  Let's say the user
- * enters auth add osd.0 'mon rwx' 'osd *'.  The result will be a JSON object
- * like {"prefix":"auth add", "entity":"osd.0", "caps":["mon rwx", "osd *"]}.
+ * enters auth add client.admin 'mon rwx' 'osd *'.  The result will be a
+ * JSON object like {"prefix":"auth add", "entity":"client.admin",
+ * "caps":["mon rwx", "osd *"]}.
  * Note that 
  * 	- string literals are accumulated into 'prefix'
  * 	- n=1 descriptors are given normal string or int object values
@@ -86,10 +87,10 @@
  * separating spaces in the quoted string.
  *
  * The monitor marshals this JSON into a std::map<string, cmd_vartype>
- * where cmd_vartype is a boost::variant type-enforcing discriminated
- * type, so the monitor is expected to know the type of each argument.
- * See cmdparse.cc/h for more details.
- */
+* where cmd_vartype is a boost::variant type-enforcing discriminated
+* type, so the monitor is expected to know the type of each argument.
+* See cmdparse.cc/h for more details.
+*/
 
 /*
  * pg commands PgMonitor.cc
@@ -127,33 +128,33 @@ COMMAND("pg set_nearfull_ratio name=ratio,type=CephFloat,range=0.0|1.0", \
  * auth commands AuthMonitor.cc
  */
 
-COMMAND("auth export name=entity,type=CephName,req=false", \
+COMMAND("auth export name=entity,type=CephString,req=false", \
        	"write keyring for requested entity, or master keyring if none given")
-COMMAND("auth get type=CephName,name=entity", \
+COMMAND("auth get name=entity,type=CephString", \
 	"write keyring file with requested key")
-COMMAND("auth get-key name=entity,type=CephName", "display requested key")
-COMMAND("auth print-key name=entity,type=CephName", "display requested key")
-COMMAND("auth print_key name=entity,type=CephName", "display requested key")
+COMMAND("auth get-key name=entity,type=CephString", "display requested key")
+COMMAND("auth print-key name=entity,type=CephString", "display requested key")
+COMMAND("auth print_key name=entity,type=CephString", "display requested key")
 COMMAND("auth list", "list authentication state")
 COMMAND("auth import", "auth import: read keyring file from input")
 COMMAND("auth add " \
-	"name=entity,type=CephName " \
+	"name=entity,type=CephString " \
 	"name=caps,type=CephString,n=N", \
 	"add auth info for <name> from input file, or random key if no input given, and/or any caps specified in the command")
 COMMAND("auth get-or-create-key " \
-	"name=entity,type=CephName " \
+	"name=entity,type=CephString " \
 	"name=caps,type=CephString,n=N,req=false", \
 	"get, or add, key for <name> from system/caps pairs specified in the command.  If key already exists, any given caps must match the existing caps for that key.")
 COMMAND("auth get-or-create " \
-	"name=entity,type=CephName " \
+	"name=entity,type=CephString " \
 	"name=caps,type=CephString,n=N,req=false", \
 	"add auth info for <name> from input file, or random key if no input given, and/or any caps specified in the command")
 COMMAND("auth caps " \
-	"name=entity,type=CephName " \
+	"name=entity,type=CephString " \
 	"name=caps,type=CephString,n=N", \
 	"update caps for <name> from caps specified in the command")
 COMMAND("auth del " \
-	"name=entity,type=CephName", \
+	"name=entity,type=CephString", \
 	"delete all caps for <name>")
 
 /*
