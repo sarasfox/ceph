@@ -719,7 +719,7 @@ def parse_cmdargs(args=None, usage='', epilog='', add_help=True):
                         help='input file')
     parser.add_argument('--id', dest='client_id',
                         help='client id for authentication')
-    parser.add_argument('--name', dest='client_name',
+    parser.add_argument('--name', '-n', dest='client_name',
                         help='client name for authentication')
     parser.add_argument('-o', '--out-file', dest='output_file',
                         help='output file')
@@ -777,9 +777,9 @@ def do_command(command, d, endless=False):
             while not p.poll():
                 (r, _, e) = select.select(fdlist, [], fdlist, 1)
                 if (p.stdout.fileno() in r):
-                    print p.stdout.read()
+                    sys.stdout.write(p.stdout.read())
                 if (p.stderr.fileno() in r):
-                    print >> sys.stderr, p.stderr.read()
+                    sys.stderr.write(p.stderr.read())
                 if e:
                     print >> sys.stderr, "error on process stdout/stderr"
         except KeyboardInterrupt:
