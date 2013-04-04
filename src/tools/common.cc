@@ -270,7 +270,6 @@ int do_command(CephToolCtx *ctx,
 
   bool mon = true;
   string prefix;
-  vector<string> prefix_vec;
   map<string, cmd_vartype> cmdmap;
 
   stringstream ss;
