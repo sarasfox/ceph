@@ -2432,8 +2432,10 @@ void PG::init(int role, vector<int>& newup, vector<int>& newacting,
   info.stats.acting = acting;
   info.stats.mapping_epoch = info.history.same_interval_since;
 
-  if (backfill)
+  if (backfill) {
+    dout(10) << __func__ << ": Setting backfill" << dendl;
     info.last_backfill = hobject_t();
+  }
 
   reg_next_scrub();
 

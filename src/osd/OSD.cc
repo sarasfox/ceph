@@ -1650,6 +1650,7 @@ PG *OSD::_create_lock_pg(
     // either it's not deleting, or we failed to get to it in time
     t.create_collection(coll_t(pgid));
   } else {
+    dout(10) << __func__ << ": halted deletion on pg " << pgid << dendl;
     backfill = true;
   }
 
