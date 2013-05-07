@@ -1645,12 +1645,15 @@ PG *OSD::_create_lock_pg(
   PG *pg = _open_lock_pg(createmap, pgid, true, hold_map_lock);
 
   DeletingStateRef df = service.deleting_pgs.lookup(pgid);
+  bool backfill = false;
   if (!(df && df->try_stop_deletion())) {
     // either it's not deleting, or we failed to get to it in time
     t.create_collection(coll_t(pgid));
+  } else {
+    backfill = true;
   }
 
-  pg->init(role, up, acting, history, pi, &t);
+  pg->init(role, up, acting, history, pi, backfill, &t);
 
   dout(7) << "_create_lock_pg " << *pg << dendl;
   return pg;
