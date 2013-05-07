@@ -2435,6 +2435,7 @@ void PG::init(int role, vector<int>& newup, vector<int>& newacting,
   if (backfill) {
     dout(10) << __func__ << ": Setting backfill" << dendl;
     info.last_backfill = hobject_t();
+    info.last_complete = info.last_update;
   }
 
   reg_next_scrub();
