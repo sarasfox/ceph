@@ -2428,6 +2428,7 @@ void PG::init(int role, vector<int>& newup, vector<int>& newacting, pg_history_t
   info.stats.up = up;
   info.stats.acting = acting;
   info.stats.mapping_epoch = info.history.same_interval_since;
+  info.last_backfill = hobject_t();
 
   reg_next_scrub();
 
