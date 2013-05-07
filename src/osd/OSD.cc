@@ -1644,7 +1644,11 @@ PG *OSD::_create_lock_pg(
 
   PG *pg = _open_lock_pg(createmap, pgid, true, hold_map_lock);
 
-  t.create_collection(coll_t(pgid));
+  DeletingStateRef df = service.deleting_pgs.lookup(pgid);
+  if (!(df && df->try_stop_deletion())) {
+    // either it's not deleting, or we failed to get to it in time
+    t.create_collection(coll_t(pgid));
+  }
 
   pg->init(role, up, acting, history, pi, &t);
 
@@ -2780,7 +2784,7 @@ void TestOpsSocketHook::test_ops(OSDService *service, ObjectStore *store,
 }
 
 // =========================================
-void remove_dir(
+bool remove_dir(
   ObjectStore *store, SnapMapper *mapper,
   OSDriver *osdriver,
   ObjectStore::Sequencer *osr,
@@ -2801,12 +2805,17 @@ void remove_dir(
     if (num >= g_conf->osd_target_transaction_size) {
       store->apply_transaction(osr, *t);
       delete t;
+      if (!dstate->check_canceled()) {
+	// canceled!
+	return false;
+      }
       t = new ObjectStore::Transaction;
       num = 0;
     }
   }
   store->apply_transaction(*t);
   delete t;
+  return true;
 }
 
 void OSD::RemoveWQ::_process(pair<PGRef, DeletingStateRef> item)
@@ -2817,12 +2826,23 @@ void OSD::RemoveWQ::_process(pair<PGRef, DeletingStateRef> item)
   coll_t coll = coll_t(pg->info.pgid);
   pg->osr->flush();
 
-  if (pg->have_temp_coll())
-    remove_dir(
-      store, &mapper, &driver, pg->osr.get(), pg->get_temp_coll(), item.second);
-  remove_dir(store, &mapper, &driver, pg->osr.get(), coll, item.second);
+  if (!item.second->start_clearing())
+    return;
 
-  ObjectStore::Transaction t;
+  if (pg->have_temp_coll()) {
+    bool cont = remove_dir(
+      store, &mapper, &driver, pg->osr.get(), pg->get_temp_coll(), item.second);
+    if (!cont)
+      return;
+  }
+  bool cont = remove_dir(
+    store, &mapper, &driver, pg->osr.get(), coll, item.second);
+  if (!cont)
+    return;
+
+  if (!item.second->start_deleting())
+    return;
+
   ObjectStore::Transaction *t = new ObjectStore::Transaction;
   PG::clear_info_log(
     pg->info.pgid,
@@ -2837,6 +2857,8 @@ void OSD::RemoveWQ::_process(pair<PGRef, DeletingStateRef> item)
     t,
     new ObjectStore::C_DeleteTransactionHolder<pair<PGRef, DeletingStateRef> >(
       t, item));
+
+  item.second->finish_deleting();
 }
 // =========================================
 
