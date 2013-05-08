@@ -1907,6 +1907,7 @@ noinst_HEADERS = \
 	mon/MonmapMonitor.h\
         mon/MonCaps.h\
         mon/MonClient.h\
+	mon/MonCommands.h\
         mon/MonMap.h\
         mon/Monitor.h\
 	mon/MonitorStore.h\
