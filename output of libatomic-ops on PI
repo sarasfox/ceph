@@ -1,0 +1,290 @@
+Making check in src
+make[1]: Entering directory `/home/pi/hp/libatomic_ops-1.2/src'
+Making check in atomic_ops
+make[2]: Entering directory `/home/pi/hp/libatomic_ops-1.2/src/atomic_ops'
+Making check in sysdeps
+make[3]: Entering directory `/home/pi/hp/libatomic_ops-1.2/src/atomic_ops/sysdeps'
+make[3]: Nothing to be done for `check'.
+make[3]: Leaving directory `/home/pi/hp/libatomic_ops-1.2/src/atomic_ops/sysdeps'
+make[3]: Entering directory `/home/pi/hp/libatomic_ops-1.2/src/atomic_ops'
+make[3]: Nothing to be done for `check-am'.
+make[3]: Leaving directory `/home/pi/hp/libatomic_ops-1.2/src/atomic_ops'
+make[2]: Leaving directory `/home/pi/hp/libatomic_ops-1.2/src/atomic_ops'
+make[2]: Entering directory `/home/pi/hp/libatomic_ops-1.2/src'
+make[2]: Leaving directory `/home/pi/hp/libatomic_ops-1.2/src'
+make[1]: Leaving directory `/home/pi/hp/libatomic_ops-1.2/src'
+Making check in doc
+make[1]: Entering directory `/home/pi/hp/libatomic_ops-1.2/doc'
+make[1]: Nothing to be done for `check'.
+make[1]: Leaving directory `/home/pi/hp/libatomic_ops-1.2/doc'
+Making check in tests
+make[1]: Entering directory `/home/pi/hp/libatomic_ops-1.2/tests'
+make  check-am
+make[2]: Entering directory `/home/pi/hp/libatomic_ops-1.2/tests'
+make  test_atomic test_atomic_pthreads test_stack test_malloc
+make[3]: Entering directory `/home/pi/hp/libatomic_ops-1.2/tests'
+if gcc -DHAVE_CONFIG_H -I. -I. -I../src  -I./../src   -g -O2 -DNDEBUG -MT test_atomic.o -MD -MP -MF ".deps/test_atomic.Tpo" -c -o test_atomic.o test_atomic.c; \
+  then mv -f ".deps/test_atomic.Tpo" ".deps/test_atomic.Po"; else rm -f ".deps/test_atomic.Tpo"; exit 1; fi
+/tmp/cc2umVeA.s: Assembler messages:
+/tmp/cc2umVeA.s:130: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:161: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:306: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:610: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:795: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:818: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:853: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:893: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:932: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1064: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1246: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1276: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1457: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1475: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1500: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1535: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1575: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1614: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1731: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1749: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1767: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1785: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1808: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1845: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1863: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1898: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1916: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1951: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:1968: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:2100: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:2123: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:2158: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:2198: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:2237: Warning: swp{b} use is deprecated for this architecture
+/tmp/cc2umVeA.s:2369: Warning: swp{b} use is deprecated for this architecture
+gcc  -g -O2 -DNDEBUG   -o test_atomic  test_atomic.o -lpthread ../src/libatomic_ops.a 
+if gcc -DHAVE_CONFIG_H -I. -I. -I../src  -DAO_USE_PTHREAD_DEFS -I./../src   -g -O2 -DNDEBUG -MT test_atomic_pthreads-test_atomic.o -MD -MP -MF ".deps/test_atomic_pthreads-test_atomic.Tpo" -c -o test_atomic_pthreads-test_atomic.o `test -f 'test_atomic.c' || echo './'`test_atomic.c; \
+	then mv -f ".deps/test_atomic_pthreads-test_atomic.Tpo" ".deps/test_atomic_pthreads-test_atomic.Po"; else rm -f ".deps/test_atomic_pthreads-test_atomic.Tpo"; exit 1; fi
+gcc  -g -O2 -DNDEBUG   -o test_atomic_pthreads  test_atomic_pthreads-test_atomic.o -lpthread ../src/libatomic_ops.a 
+if gcc -DHAVE_CONFIG_H -I. -I. -I../src  -I./../src   -g -O2 -DNDEBUG -MT test_stack.o -MD -MP -MF ".deps/test_stack.Tpo" -c -o test_stack.o test_stack.c; \
+	then mv -f ".deps/test_stack.Tpo" ".deps/test_stack.Po"; else rm -f ".deps/test_stack.Tpo"; exit 1; fi
+gcc  -g -O2 -DNDEBUG   -o test_stack  test_stack.o -lpthread ../src/libatomic_ops_gpl.a ../src/libatomic_ops.a  
+if gcc -DHAVE_CONFIG_H -I. -I. -I../src  -I./../src   -g -O2 -DNDEBUG -MT test_malloc.o -MD -MP -MF ".deps/test_malloc.Tpo" -c -o test_malloc.o test_malloc.c; \
+	then mv -f ".deps/test_malloc.Tpo" ".deps/test_malloc.Po"; else rm -f ".deps/test_malloc.Tpo"; exit 1; fi
+gcc  -g -O2 -DNDEBUG   -o test_malloc  test_malloc.o -lpthread ../src/libatomic_ops_gpl.a ../src/libatomic_ops.a  
+make[3]: Leaving directory `/home/pi/hp/libatomic_ops-1.2/tests'
+make  check-TESTS
+make[3]: Entering directory `/home/pi/hp/libatomic_ops-1.2/tests'
+Missing: AO_fetch_and_add
+Missing: AO_fetch_and_add1
+Missing: AO_fetch_and_sub1
+Missing: AO_short_fetch_and_add
+Missing: AO_short_fetch_and_add1
+Missing: AO_short_fetch_and_sub1
+Missing: AO_char_fetch_and_add
+Missing: AO_char_fetch_and_add1
+Missing: AO_char_fetch_and_sub1
+Missing: AO_int_fetch_and_add
+Missing: AO_int_fetch_and_add1
+Missing: AO_int_fetch_and_sub1
+Missing: AO_compare_and_swap
+Missing: AO_or
+Missing: AO_compare_double_and_swap_double
+Missing: AO_compare_and_swap_double
+Missing: AO_nop_acquire
+Missing: AO_store_acquire
+Missing: AO_fetch_and_add_acquire
+Missing: AO_fetch_and_add1_acquire
+Missing: AO_fetch_and_sub1_acquire
+Missing: AO_short_store_acquire
+Missing: AO_short_fetch_and_add_acquire
+Missing: AO_short_fetch_and_add1_acquire
+Missing: AO_short_fetch_and_sub1_acquire
+Missing: AO_char_store_acquire
+Missing: AO_char_fetch_and_add_acquire
+Missing: AO_char_fetch_and_add1_acquire
+Missing: AO_char_fetch_and_sub1_acquire
+Missing: AO_int_store_acquire
+Missing: AO_int_fetch_and_add_acquire
+Missing: AO_int_fetch_and_add1_acquire
+Missing: AO_int_fetch_and_sub1_acquire
+Missing: AO_compare_and_swap_acquire
+Missing: AO_or_acquire
+Missing: AO_compare_double_and_swap_double_acquire
+Missing: AO_compare_and_swap_double_acquire
+Missing: AO_nop_release
+Missing: AO_load_release
+Missing: AO_fetch_and_add_release
+Missing: AO_fetch_and_add1_release
+Missing: AO_fetch_and_sub1_release
+Missing: AO_short_load_release
+Missing: AO_short_fetch_and_add_release
+Missing: AO_short_fetch_and_add1_release
+Missing: AO_short_fetch_and_sub1_release
+Missing: AO_char_load_release
+Missing: AO_char_fetch_and_add_release
+Missing: AO_char_fetch_and_add1_release
+Missing: AO_char_fetch_and_sub1_release
+Missing: AO_int_load_release
+Missing: AO_int_fetch_and_add_release
+Missing: AO_int_fetch_and_add1_release
+Missing: AO_int_fetch_and_sub1_release
+Missing: AO_compare_and_swap_release
+Missing: AO_or_release
+Missing: AO_compare_double_and_swap_double_release
+Missing: AO_compare_and_swap_double_release
+Missing: AO_store_read
+Missing: AO_fetch_and_add_read
+Missing: AO_fetch_and_add1_read
+Missing: AO_fetch_and_sub1_read
+Missing: AO_short_store_read
+Missing: AO_short_fetch_and_add_read
+Missing: AO_short_fetch_and_add1_read
+Missing: AO_short_fetch_and_sub1_read
+Missing: AO_char_store_read
+Missing: AO_char_fetch_and_add_read
+Missing: AO_char_fetch_and_add1_read
+Missing: AO_char_fetch_and_sub1_read
+Missing: AO_int_store_read
+Missing: AO_int_fetch_and_add_read
+Missing: AO_int_fetch_and_add1_read
+Missing: AO_int_fetch_and_sub1_read
+Missing: AO_compare_and_swap_read
+Missing: AO_or_read
+Missing: AO_compare_double_and_swap_double_read
+Missing: AO_compare_and_swap_double_read
+Missing: AO_load_write
+Missing: AO_fetch_and_add_write
+Missing: AO_fetch_and_add1_write
+Missing: AO_fetch_and_sub1_write
+Missing: AO_short_load_write
+Missing: AO_short_fetch_and_add_write
+Missing: AO_short_fetch_and_add1_write
+Missing: AO_short_fetch_and_sub1_write
+Missing: AO_char_load_write
+Missing: AO_char_fetch_and_add_write
+Missing: AO_char_fetch_and_add1_write
+Missing: AO_char_fetch_and_sub1_write
+Missing: AO_int_load_write
+Missing: AO_int_fetch_and_add_write
+Missing: AO_int_fetch_and_add1_write
+Missing: AO_int_fetch_and_sub1_write
+Missing: AO_compare_and_swap_write
+Missing: AO_or_write
+Missing: AO_compare_double_and_swap_double_write
+Missing: AO_compare_and_swap_double_write
+Missing: AO_fetch_and_add_full
+Missing: AO_fetch_and_add1_full
+Missing: AO_fetch_and_sub1_full
+Missing: AO_short_fetch_and_add_full
+Missing: AO_short_fetch_and_add1_full
+Missing: AO_short_fetch_and_sub1_full
+Missing: AO_char_fetch_and_add_full
+Missing: AO_char_fetch_and_add1_full
+Missing: AO_char_fetch_and_sub1_full
+Missing: AO_int_fetch_and_add_full
+Missing: AO_int_fetch_and_add1_full
+Missing: AO_int_fetch_and_sub1_full
+Missing: AO_compare_and_swap_full
+Missing: AO_or_full
+Missing: AO_compare_double_and_swap_double_full
+Missing: AO_compare_and_swap_double_full
+Missing: AO_nop_release_write
+Missing: AO_load_release_write
+Missing: AO_fetch_and_add_release_write
+Missing: AO_fetch_and_add1_release_write
+Missing: AO_fetch_and_sub1_release_write
+Missing: AO_short_load_release_write
+Missing: AO_short_fetch_and_add_release_write
+Missing: AO_short_fetch_and_add1_release_write
+Missing: AO_short_fetch_and_sub1_release_write
+Missing: AO_char_load_release_write
+Missing: AO_char_fetch_and_add_release_write
+Missing: AO_char_fetch_and_add1_release_write
+Missing: AO_char_fetch_and_sub1_release_write
+Missing: AO_int_load_release_write
+Missing: AO_int_fetch_and_add_release_write
+Missing: AO_int_fetch_and_add1_release_write
+Missing: AO_int_fetch_and_sub1_release_write
+Missing: AO_compare_and_swap_release_write
+Missing: AO_or_release_write
+Missing: AO_compare_double_and_swap_double_release_write
+Missing: AO_compare_and_swap_double_release_write
+Missing: AO_nop_acquire_read
+Missing: AO_store_acquire_read
+Missing: AO_fetch_and_add_acquire_read
+Missing: AO_fetch_and_add1_acquire_read
+Missing: AO_fetch_and_sub1_acquire_read
+Missing: AO_short_store_acquire_read
+Missing: AO_short_fetch_and_add_acquire_read
+Missing: AO_short_fetch_and_add1_acquire_read
+Missing: AO_short_fetch_and_sub1_acquire_read
+Missing: AO_char_store_acquire_read
+Missing: AO_char_fetch_and_add_acquire_read
+Missing: AO_char_fetch_and_add1_acquire_read
+Missing: AO_char_fetch_and_sub1_acquire_read
+Missing: AO_int_store_acquire_read
+Missing: AO_int_fetch_and_add_acquire_read
+Missing: AO_int_fetch_and_add1_acquire_read
+Missing: AO_int_fetch_and_sub1_acquire_read
+Missing: AO_compare_and_swap_acquire_read
+Missing: AO_or_acquire_read
+Missing: AO_compare_double_and_swap_double_acquire_read
+Missing: AO_compare_and_swap_double_acquire_read
+Testing store_release_write/load_acquire_read
+Succeeded
+Testing test_and_set
+Succeeded
+PASS: test_atomic
+Missing: AO_nop_acquire
+Missing: AO_store_acquire
+Missing: AO_short_store_acquire
+Missing: AO_char_store_acquire
+Missing: AO_int_store_acquire
+Missing: AO_nop_release
+Missing: AO_load_release
+Missing: AO_short_load_release
+Missing: AO_char_load_release
+Missing: AO_int_load_release
+Missing: AO_store_read
+Missing: AO_short_store_read
+Missing: AO_char_store_read
+Missing: AO_int_store_read
+Missing: AO_load_write
+Missing: AO_short_load_write
+Missing: AO_char_load_write
+Missing: AO_int_load_write
+Missing: AO_nop_release_write
+Missing: AO_load_release_write
+Missing: AO_short_load_release_write
+Missing: AO_char_load_release_write
+Missing: AO_int_load_release_write
+Missing: AO_nop_acquire_read
+Missing: AO_store_acquire_read
+Missing: AO_short_store_acquire_read
+Missing: AO_char_store_acquire_read
+Missing: AO_int_store_acquire_read
+Testing add1/sub1
+Succeeded
+Testing store_release_write/load_acquire_read
+Succeeded
+Testing test_and_set
+Succeeded
+PASS: test_atomic_pthreads
+About 1000000 pushes + 1000000 pops in 1 threads: 3796 msecs
+About 1000000 pushes + 1000000 pops in 2 threads: 3802 msecs
+About 1000000 pushes + 1000000 pops in 3 threads: 3834 msecs
+About 1000000 pushes + 1000000 pops in 4 threads: 4233 msecs
+PASS: test_stack
+Performing 1000 reversals of 1000 element lists in 10 threads
+Testing AO_malloc/AO_free
+Succeeded
+PASS: test_malloc
+==================
+All 4 tests passed
+==================
+make[3]: Leaving directory `/home/pi/hp/libatomic_ops-1.2/tests'
+make[2]: Leaving directory `/home/pi/hp/libatomic_ops-1.2/tests'
+make[1]: Leaving directory `/home/pi/hp/libatomic_ops-1.2/tests'
+make[1]: Entering directory `/home/pi/hp/libatomic_ops-1.2'
+make[1]: Nothing to be done for `check-am'.
+make[1]: Leaving directory `/home/pi/hp/libatomic_ops-1.2'
