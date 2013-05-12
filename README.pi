@@ -1,0 +1,21 @@
+Issue building ceph on Rasberry PI
+One three missing package form Raspbian “wheezy”
+- libgoogle-perftools-dev
+- libleveldb-dev
+- dot
+
+Found libleveldb-dev in the debian repos can be downloaded from below. 
+
+http://packages.debian.org/wheezy/armhf/libleveldb-dev/download
+
+Can be installed with dpkg -i command.
+
+You will need at least 512 mb of swap space to build on the the PI.
+
+The libatomic-ops-dev package in Raspbian is not compible with ceph.
+You will get like the below.
+
+./include/atomic.h: In member function ‘size_t ceph::atomic_t::inc()’:
+./include/atomic.h:42:36: error: ‘AO_fetch_and_add1’ was not declared in this scope
+
+
